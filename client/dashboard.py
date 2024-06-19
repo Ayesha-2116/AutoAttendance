@@ -46,6 +46,7 @@ late_arrival_data = {
 
 df_late_arrivals = pd.DataFrame(late_arrival_data)
 
+#previous week
 presenter_data = {
     "Presenter": ["Aznam Yacoub", "Soroush Zadeh", "Hossein Fani", "Zara"],
     "Rating": [3, 2.5, 5, 3.5]
@@ -54,7 +55,7 @@ presenter_data = {
 
 df_presenters = pd.DataFrame(presenter_data)
 
-
+#previous week
 workshop_rating_data = {
     "Workshop": ["Intro to AI", "Basics of Big Data", "Information Retrieval Systems", "Deep Learning"],
     "Rating": [4, 3.5, 2, 4.5]
@@ -79,7 +80,10 @@ with col2:
     # st.subheader("Present and Absent Percentage by Month")
     fig_monthly = px.bar(df_monthly, x='Month', y=['Present Percentage', 'Absent Percentage'], barmode='group',
                          labels={'value': 'Percentage', 'variable': 'Attendance'},
-                         title='Monthly Attendance Percentages')
+                         title='Monthly Attendance Percentages', color='variable',color_discrete_map={
+            'Present Percentage': 'orange',
+            'Absent Percentage': 'red'
+        })
     st.plotly_chart(fig_monthly)
 
 # Chart 3: Late arrivals in the past three weeks
@@ -93,15 +97,24 @@ with col1:
 # Chart 4: Top presenters of last week
 with col2:
     # st.subheader("Top Presenters of Last Week")
-    fig_presenters = px.bar(df_presenters, x='Presenter', y='Rating',
-                            labels={'Rating': 'Rating', 'Presenter': 'Presenter'},
-                            title='Top Presenters of Last Week')
+    fig_presenters = px.pie(
+        df_presenters,
+        names='Presenter',
+        values='Rating',
+        labels={'Rating': 'Rating', 'Presenter': 'Presenter'},
+        title='Top Presenters of Last Week'
+    )
     st.plotly_chart(fig_presenters)
 
 # Chart 5: Top workshops of last week
 with col1:
-    # st.subheader("Top Workshops of Last Week")
-    fig_workshop_ratings = px.bar(df_workshop_ratings, x='Workshop', y='Rating',
-                                  labels={'Rating': 'Rating', 'Workshop': 'Workshop'},
-                                  title='Top Workshops of Last Week')
+    fig_workshop_ratings = px.pie(
+        df_workshop_ratings,
+        names='Workshop',
+        values='Rating',
+        labels={'Rating': 'Rating', 'Workshop': 'Workshop'},
+        title='Top Workshops of Last Week',
+        color_discrete_sequence=px.colors.qualitative.Light24
+
+    )
     st.plotly_chart(fig_workshop_ratings)
