@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fe84a664-6541-44ea-8e36-387bc9966927" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/AutoAttend.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/AutoAttend.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client/.streamlit/config.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/client/dashboard.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +54,7 @@
       <option name="presentableId" value="Default" />
       <updated>1718211460234</updated>
       <workItem from="1718211461397" duration="433000" />
-      <workItem from="1718748741192" duration="4030000" />
+      <workItem from="1718748741192" duration="5864000" />
     </task>
     <servers />
   </component>
