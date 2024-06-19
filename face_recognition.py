@@ -1,31 +1,41 @@
 import face_recognition
 import cv2
 import os
+import numpy as np
+from pymongo import MongoClient
+import base64
+from io import BytesIO
 
-# Path to the dataset folder
-dataset_path = "dataset"
+client = MongoClient('mongodb://localhost:27017/')
+db = client['attendance']
+collection = db['students']
 
-# Initialize a dictionary to hold the encodings and student IDs
-known_encodings = []
+# Initialize a variable to store the reference face encodings and student IDs
+known_face_encodings = []
 student_ids = []
+student_names = []
+# Load known faces and their encodings from MongoDB
+students = collection.find()
 
-# Load and encode each student image
-for file_name in os.listdir(dataset_path):
-    if file_name.endswith(".jpg") or file_name.endswith(".png"):
-        # Get the student ID from the file name (assuming it's the name without the extension)
-        student_id = os.path.splitext(file_name)[0]
-
-        # Load the image file
-        image_path = os.path.join(dataset_path, file_name)
-        student_image = face_recognition.load_image_file(image_path)
-
-        # Get the face encoding
-        student_encoding = face_recognition.face_encodings(student_image)[0]
-
-        # Append the encoding and student ID to the lists
-        known_encodings.append(student_encoding)
+for student in students:    
+    name = student['name']
+    student_id = student['student_id']
+    photo_data = student['photo']
+    # Decode the base64 photo data
+    image_bytes = base64.b64decode(photo_data)
+    image = np.frombuffer(image_bytes, dtype=np.uint8)
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+    
+    # Get the face encoding
+    face_encodings = face_recognition.face_encodings(image)
+    
+    if face_encodings:
+        known_face_encodings.append(face_encodings[0])
         student_ids.append(student_id)
-print(student_ids)
+        student_names.append(name)
+    else:
+        print(f"No face found in the photo for student ID {student_id}")
+
 # Start the video capture
 video_capture = cv2.VideoCapture(0)
 
@@ -42,10 +52,10 @@ while True:
     
     for face_encoding in face_encodings:
         # Compare the face with the known faces
-        matches = face_recognition.compare_faces(known_encodings, face_encoding)
+        matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
         
         # Find the distances to all known faces
-        face_distances = face_recognition.face_distance(known_encodings, face_encoding)
+        face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
         
         # Get the best match index
         best_match_index = face_distances.argmin()
