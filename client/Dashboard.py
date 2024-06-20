@@ -6,8 +6,7 @@ st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
 st.title('Auto Attend')
 
-
-
+#CHART No.1 : ---------------------------------
 workshop_data = {
     "Workshop Title": [
         "Intro to AI", "Basics of Big Data", "Information Retrieval Systems",
@@ -22,7 +21,10 @@ workshop_data = {
 
 df_workshops = pd.DataFrame(workshop_data)
 
+#Removed the Monthly data showcasing the attendance count per workshop.
+#Will add it in the end if needed.
 
+#CHART No.2 : ---------------------------------
 late_arrival_data = {
     "Workshop Title": [
     "Intro to AI", "Basics of Big Data", "Information Retrieval Systems",
@@ -36,6 +38,7 @@ late_arrival_data = {
 
 df_late_arrivals = pd.DataFrame(late_arrival_data)
 
+#CHART No.3 : ---------------------------------
 #previous week
 presenter_data = {
     "Presenter": ["Aznam Yacoub", "Soroush Zadeh", "Hossein Fani", "Zara"],
@@ -45,6 +48,7 @@ presenter_data = {
 
 df_presenters = pd.DataFrame(presenter_data)
 
+#CHART No.4 : ---------------------------------
 #previous week
 workshop_rating_data = {
     "Workshop": ["Intro to AI", "Basics of Big Data", "Information Retrieval Systems", "Deep Learning"],
@@ -65,7 +69,7 @@ with col1:
                            title="Student's Attendance in Workshops")
     st.plotly_chart(fig_workshops)
 
-# Chart 3: Late arrivals in the past three weeks
+# Chart 2: Late arrivals in the past three weeks
 with col2:
     # st.subheader("Number of Students that Arrived Late in the Past Three Weeks")
     fig_late_arrivals = px.bar(df_late_arrivals, x='Workshop Title', y='Late Arrival',
@@ -74,7 +78,7 @@ with col2:
     fig_late_arrivals.update_traces(marker_color='orange')
     st.plotly_chart(fig_late_arrivals)
 
-# Chart 4: Top presenters of last week
+# Chart 3: Top presenters of last week
 with col1:
     # st.subheader("Top Presenters of Last Week")
     fig_presenters = px.pie(
@@ -86,7 +90,7 @@ with col1:
     )
     st.plotly_chart(fig_presenters)
 
-# Chart 5: Top workshops of last week
+# Chart 4: Top workshops of last week
 with col2:
     fig_workshop_ratings = px.pie(
         df_workshop_ratings,
