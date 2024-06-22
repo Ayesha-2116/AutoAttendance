@@ -107,6 +107,12 @@ student_name = st.text_input('Enter Student Name:')
 student_id = st.text_input('Enter Student ID:')
 
 def save_to_mongodb(name, student_id, image):
+     # Check if student ID already exists
+    existing_student = collection.find_one({'student_id': student_id})
+    
+    if existing_student:
+        st.warning(f"Student with ID '{student_id}' already exists. Please use a different student ID.")
+        return
     # Convert image to bytes for storage
     _, buffer = cv2.imencode('.jpg', image)
     image_bytes = BytesIO(buffer).getvalue()
