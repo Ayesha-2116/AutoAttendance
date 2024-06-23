@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 import cv2
 import numpy as np
@@ -103,11 +104,16 @@ collection = db['students']
 st.title('Register Student Records')
 
 # Input fields for student name and ID
-student_name = st.text_input('Enter Student Name:')
-student_id = st.text_input('Enter Student ID:')
+# Input fields for student name and ID
+placeholder_student_name = st.empty()
+placeholder_student_id = st.empty()
+placeholder_camera = st.empty()
+student_name = placeholder_student_name.text_input('Enter Student Name:',  key='student_name_input1')
+student_id = placeholder_student_id.text_input('Enter Student ID:', key='student_id_input1')
+
 
 def save_to_mongodb(name, student_id, image):
-     # Check if student ID already exists
+    # Check if student ID already exists
     existing_student = collection.find_one({'student_id': student_id})
     
     if existing_student:
@@ -130,9 +136,14 @@ def save_to_mongodb(name, student_id, image):
     # Insert document into MongoDB collection
     collection.insert_one(document)
     st.success('Data saved successfully!')
+    #code to refresh fields
+    student_name = placeholder_student_name.text_input('Enter Student Name:',  key='student_name_input2')
+    student_id = placeholder_student_id.text_input('Enter Student ID:', key='student_id_input2')
+    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
+   
 
 # Camera input
-img_file_buffer = st.camera_input("Capture Photo")
+img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
 
 if img_file_buffer is not None:
     # To read image file buffer with OpenCV:
