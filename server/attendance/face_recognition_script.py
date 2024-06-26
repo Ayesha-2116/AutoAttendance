@@ -126,13 +126,17 @@ def main():
         workshop_id, DB_NAME, URI
     )
 
+    placeholder_camera = st.empty()
+
     # Capture photo
-    img_file_buffer = st.camera_input("Capture Photo")
+    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
 
     if img_file_buffer:
         image = cv2.imdecode(np.frombuffer(img_file_buffer.read(), dtype=np.uint8), cv2.IMREAD_COLOR)
         result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id, attendance_collection)
-        st.write(result)
+        st.success(result)
+        img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
 
-if __name__ == "__main__":
+
+if _name_ == "_main_":
     main()
