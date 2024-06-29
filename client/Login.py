@@ -92,6 +92,11 @@ st.markdown('<h1 id="autoattend-tracker">', unsafe_allow_html=True)
 st.markdown('<div data-testid="stVerticalBlock">', unsafe_allow_html=True)
 st.markdown('<div data-testid="stVerticalBlockBorderWrapper" data-test-scroll-behavior="normal">', unsafe_allow_html=True)
 
+
+# MongoDB connection details
+URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+DB_NAME = 'attendance_system'
+
 # Connect to MongoDB
 def get_mongo_client():
     client = MongoClient('mongodb://localhost:27017/')  # Replace with your MongoDB URI
@@ -121,9 +126,12 @@ def userRegistration():
         elif password.strip() != confirmPassword.strip():
             st.error('Password mismatch. Please check.')
         else:
-            client = get_mongo_client()
-            db = client['Attendence']  # Replace with your database name
-            users_collection = db['Users']  # Replace with your collection name
+            # Connect to MongoDB
+            db, users_collection = connect_to_mongodb(URI)
+
+            #client = get_mongo_client()
+            #db = client['Attendence']  # Replace with your database name
+            #users_collection = db['Users']  # Replace with your collection name
             
             # Check if the user already exists
             if users_collection.find_one({'email': email}):
@@ -154,9 +162,10 @@ def login():
         if email.strip() == '' or password.strip() == '':
             st.error('Please fill in all required fields.')
         else:
-            client = get_mongo_client()
-            db = client['Attendence']  # Replace with your database name
-            users_collection = db['Users']  # Replace with your collection name
+            db, users_collection = connect_to_mongodb(URI)
+            #client = get_mongo_client()
+            #db = client['Attendence']  # Replace with your database name
+            #users_collection = db['Users']  # Replace with your collection name
             
             # Perform login authentication here
             user = users_collection.find_one({'email': email})
