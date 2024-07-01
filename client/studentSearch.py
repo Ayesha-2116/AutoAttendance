@@ -1,17 +1,28 @@
 import streamlit as st
 from pymongo import MongoClient
-from Dashboard import dashboard
-from Register import userRegistration
-# Define your custom CSS
+import pandas as pd
 
+# MongoDB connection details
+URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+DB_NAME = 'attendance_system'
+
+def connect_to_mongodb(uri):
+    """
+    Establishes a connection to MongoDB and returns the database and required collections.
+    """
+    client = MongoClient(uri)
+    db = client[DB_NAME]
+    return db, db['attendance'], db['workshops']
+
+# Define your custom CSS
 custom_css = """
 <style>
-    .appview-container { /* background*/
+    .appview-container { /* background */
         background-color: #f0f0f0;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
-        margin-top: 50px
+        margin-top: 50px;
     }
     [data-testid="stAppViewBlockContainer"] {
         border: 2px solid #9e9e9e;  /* gray border color */
@@ -21,37 +32,48 @@ custom_css = """
         margin-top: 90px;           /* Set your desired height */
         width: 100%;                /* Set the width as needed */
     }
-
-
-    #autoattend-tracker {
-        margin-top: -70px;
-        margin-left: 150px;
-        color: DodgerBlue;
-        /*background-color: DodgerBlue;
-        width: 250%; */
-    }
-
-    [data-testid="stVerticalBlock"] {  /* login block*/
-        margin-top: -270px
-    } 
-    
 </style>
 """
 
 # Inject the custom CSS into the app
 st.markdown(custom_css, unsafe_allow_html=True)
-# Create a section with custom CSS classes
-st.markdown('<div class="appview-container">', unsafe_allow_html=True)
-st.markdown('<div class="stHeadingContainer">', unsafe_allow_html=True)
-st.markdown('<h1 id="autoattend-tracker">', unsafe_allow_html=True)
-st.markdown('<div data-testid="stVerticalBlock">', unsafe_allow_html=True)
-st.markdown('<div data-testid="stVerticalBlockBorderWrapper" data-test-scroll-behavior="normal">', unsafe_allow_html=True)
 
-# Connect to MongoDB
-def get_mongo_client():
-    client = MongoClient('mongodb://localhost:27017/')  # Replace with your MongoDB URI
-    return client
-# Write the search function here:
+def student_search():
+    st.title("Student Search")
+    search_term = st.text_input("Enter student ID", placeholder="Search for a student")
+    search_button = st.button("Search")
+
+    if search_button:
+        # Connect to MongoDB
+        db, attendance_collection, workshops_collection = connect_to_mongodb(URI)
+
+        # Query attendance collection
+        attendance_records = list(attendance_collection.find({"username": search_term}))
+
+        if attendance_records:
+            workshop_ids = [record['workshopId'] for record in attendance_records]
+            workshop_counts = {workshop_id: workshop_ids.count(workshop_id) for workshop_id in workshop_ids}
+
+            # Query workshops collection
+            workshops = workshops_collection.find({"workshopId": {"$in": workshop_ids}})
+            workshops_dict = {workshop['workshopId']: workshop for workshop in workshops}
+
+            # Prepare data for display
+            data = []
+            for record in attendance_records:
+                workshop = workshops_dict.get(record['workshopId'], {})
+                data.append({
+                    "Student ID": record['username'],
+                    "Workshop Name": workshop.get('workshopName', 'Unknown'),
+                    "Date Time": workshop.get('date', 'Unknown'),
+                    "Count": workshop_counts[record['workshopId']]
+                })
+
+            # Convert data to DataFrame and display
+            df = pd.DataFrame(data)
+            st.table(df)
+        else:
+            st.write("No attendance records found for the given student ID.")
 
 def main():
     # Apply custom CSS style
@@ -61,17 +83,14 @@ def main():
             body {
                 background-color: LightGray;
             }
-            .stTextInput > div > div > input[type="text"],
-            .stTextInput > div > div > input[type="password"] {
+            .stTextInput > div > div > input[type="text"] {
                 background-color: white;
                 border: 1px solid #ccc;
                 border-radius: 5px;
                 padding: 8px;
                 width: 100%;
             }
-            
-            .stTextInput > div > div > input[type="text"]:hover,
-            .stTextInput > div > div > input[type="password"]:hover {
+            .stTextInput > div > div > input[type="text"]:hover {
                 outline: DodgerBlue;
             }
             .stButton button {
@@ -84,7 +103,6 @@ def main():
                 width: 100%;
                 transition: background-color 0.3s, color 0.3s;
             }
-        
             .stButton button:hover {
                 background-color: #1e90ff; /* Slightly lighter DodgerBlue for hover effect */
                 color: white;
@@ -106,7 +124,9 @@ def main():
             }
         </style>
     """, unsafe_allow_html=True)
-
+    
+    # Display the student search functionality
+    student_search()
 
 if __name__ == "__main__":
     main()
