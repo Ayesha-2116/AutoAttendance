@@ -12,7 +12,7 @@ def connect_to_mongodb(uri):
     """
     client = MongoClient(uri)
     db = client[DB_NAME]
-    return db, db['attendance'], db['workshops']
+    return db, db['attendance'], db['workshops'], db['students']
 
 # Define your custom CSS
 custom_css = """
@@ -39,41 +39,68 @@ custom_css = """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 def student_search():
-    st.title("Student Search")
-    search_term = st.text_input("Enter student ID", placeholder="Search for a student")
+    st.title("Student Workshop Attendance Search")
+    search_term = st.text_input("Enter Student ID", placeholder="Search for a student")
     search_button = st.button("Search")
 
     if search_button:
         # Connect to MongoDB
-        db, attendance_collection, workshops_collection = connect_to_mongodb(URI)
+        db, attendance_collection, workshops_collection, students_collection = connect_to_mongodb(URI)
 
-        # Query attendance collection
-        attendance_records = list(attendance_collection.find({"username": search_term}))
+        # Query students collection for student name
+        student = students_collection.find_one({"studentID": search_term})
 
-        if attendance_records:
-            workshop_ids = [record['workshopId'] for record in attendance_records]
-            workshop_counts = {workshop_id: workshop_ids.count(workshop_id) for workshop_id in workshop_ids}
+        if not student:
+            st.error(f"Student ID '{search_term}' not found.")
+        else:
+            student_name = f"{student['firstName']} {student['lastName']}"
 
-            # Query workshops collection
-            workshops = workshops_collection.find({"workshopId": {"$in": workshop_ids}})
-            workshops_dict = {workshop['workshopId']: workshop for workshop in workshops}
+            # Query attendance collection
+            attendance_records = list(attendance_collection.find({"username": search_term}))
 
-            # Prepare data for display
-            data = []
-            for record in attendance_records:
-                workshop = workshops_dict.get(record['workshopId'], {})
-                data.append({
-                    "Student ID": record['username'],
-                    "Workshop Name": workshop.get('workshopName', 'Unknown'),
-                    "Date Time": workshop.get('date', 'Unknown'),
-                    "Count": workshop_counts[record['workshopId']]
+            if not attendance_records:
+                st.write(f"No attendance records found for student ID '{search_term}'.")
+            else:
+                workshop_ids = [record['workshopId'] for record in attendance_records]
+                workshop_counts = {workshop_id: workshop_ids.count(workshop_id) for workshop_id in workshop_ids}
+
+                # Query workshops collection
+                workshops = workshops_collection.find({"workshopId": {"$in": workshop_ids}})
+                workshops_dict = {workshop['workshopId']: workshop for workshop in workshops}
+
+                # Calculate total count of workshops attended
+                total_workshops_attended = sum(workshop_counts.values())
+
+# Prepare data for display
+                data = []
+                for record in attendance_records:
+                    workshop = workshops_dict.get(record['workshopId'], {})
+                    data.append({
+                        "Student ID": record['username'],
+                        "Student Name": student_name,
+                        "Workshop Name": workshop.get('workshopName', 'Unknown'),
+                        "Date & Time": workshop.get('date', 'Unknown'),
+                        "Count": workshop_counts[record['workshopId']]
+                    })
+
+                # Convert data to DataFrame
+                df = pd.DataFrame(data)
+
+                # Fill NaN values with empty strings or other appropriate placeholders
+                df = df.fillna('')
+
+                # Add total count row
+                df.loc['Total'] = pd.Series({
+                    'Student ID': '',
+                    'Student Name': '',
+                    'Workshop Name': '',
+                    'Date & Time': '',
+                    'Count': total_workshops_attended
                 })
 
-            # Convert data to DataFrame and display
-            df = pd.DataFrame(data)
-            st.table(df)
-        else:
-            st.write("No attendance records found for the given student ID.")
+                # Display the DataFrame as a table
+                st.table(df)
+
 
 def main():
     # Apply custom CSS style
