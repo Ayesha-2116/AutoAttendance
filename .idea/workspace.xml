@@ -5,9 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fe84a664-6541-44ea-8e36-387bc9966927" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/AutoAttend.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/AutoAttend.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/.streamlit/config.toml" beforeDir="false" afterPath="$PROJECT_DIR$/client/.streamlit/config.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/client/Dashboard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/attendance/face_recognition_script.py" beforeDir="false" afterPath="$PROJECT_DIR$/server/attendance/face_recognition_script.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/attendance/sendEmail.py" beforeDir="false" afterPath="$PROJECT_DIR$/client/pages/sendEmail.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,6 +47,11 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Bivek\Documents\MasterOfAppliedComputing\3rdSem\ProjIntern\Project\AutoAttend\client\pages" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -63,7 +70,11 @@
       <updated>1718211460234</updated>
       <workItem from="1718211461397" duration="433000" />
       <workItem from="1718748741192" duration="6395000" />
-      <workItem from="1718836850088" duration="2864000" />
+      <workItem from="1718836850088" duration="6133000" />
+      <workItem from="1718896856647" duration="2068000" />
+      <workItem from="1719414786993" duration="5626000" />
+      <workItem from="1720498546527" duration="3867000" />
+      <workItem from="1720502807677" duration="1514000" />
     </task>
     <servers />
   </component>

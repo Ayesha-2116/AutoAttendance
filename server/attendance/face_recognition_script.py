@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
 
+
 def connect_to_mongodb(uri):
     """
     Establishes a connection to MongoDB and returns the database and required collections.
@@ -18,13 +19,14 @@ def connect_to_mongodb(uri):
     db = client[DB_NAME]
     return db, db['students'], db['workshops'], db['attendance'], GridFS(db)
 
+
 def get_todays_workshops(workshop_collection):
     """
     Fetches workshops scheduled for today from the database.
     """
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
-    
+
     workshops = workshop_collection.find({
         'date': {
             '$gte': today_start,
@@ -32,6 +34,7 @@ def get_todays_workshops(workshop_collection):
         }
     })
     return {w['workshopName']: w['workshopId'] for w in workshops}
+
 
 @st.cache_data(ttl=60)  # Cache for 1 minute
 def load_registered_students(workshop_id, db_name, uri):
@@ -48,13 +51,13 @@ def load_registered_students(workshop_id, db_name, uri):
         "workshopId": workshop_id,
         "present": False
     })
-    
+
     known_face_encodings, student_ids, student_names = [], [], []
 
     for registered_student in registered_students:
         student_id = registered_student['username']
         student = student_collection.find_one({"studentID": student_id})
-        
+
         if student and 'profile_image_id' in student:
             profile_image_id = student['profile_image_id']
             face_encoding = get_face_encoding(profile_image_id, fs)
@@ -70,6 +73,7 @@ def load_registered_students(workshop_id, db_name, uri):
     client.close()
     return known_face_encodings, student_ids, student_names
 
+
 def get_face_encoding(profile_image_id, fs):
     """
     Retrieves and processes a student's profile image to get face encoding.
@@ -78,6 +82,7 @@ def get_face_encoding(profile_image_id, fs):
     image = cv2.imdecode(np.frombuffer(profile_image_data, dtype=np.uint8), cv2.IMREAD_COLOR)
     face_encodings = face_recognition.face_encodings(image)
     return face_encodings[0] if face_encodings else None
+
 
 def process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id, attendance_collection):
     """
@@ -110,6 +115,7 @@ def process_attendance(image, known_face_encodings, student_ids, student_names, 
 
     return "Face not recognized or student not registered for this workshop"
 
+
 def main():
     st.title("Workshop Attendance System")
 
@@ -126,17 +132,15 @@ def main():
         workshop_id, DB_NAME, URI
     )
 
-    placeholder_camera = st.empty()
-
     # Capture photo
-    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
+    img_file_buffer = st.camera_input("Capture Photo")
 
     if img_file_buffer:
         image = cv2.imdecode(np.frombuffer(img_file_buffer.read(), dtype=np.uint8), cv2.IMREAD_COLOR)
-        result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id, attendance_collection)
-        st.success(result)
-        img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
+        result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id,
+                                    attendance_collection)
+        st.write(result)
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
