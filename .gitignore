@@ -51,3 +51,7 @@ yarn-error.log
 # Windows
 Thumbs.db
 ehthumbs.db
+
+
+.idea
+.idea/workspace.xml
