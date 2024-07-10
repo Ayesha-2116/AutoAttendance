@@ -1,6 +1,9 @@
 import streamlit as st
-import Dashboard
-import registerStudent
+import Dashboard,registerStudent
+import registerStudent, studentSearch, face_recognition_script
+import sys, os
+
+
 from streamlit_option_menu import option_menu
 
 st.set_page_config(
@@ -24,7 +27,7 @@ class AutoAttedApp:
     def run(self):
         with st.sidebar:
             app = option_menu(
-                menu_title='Content',
+                menu_title= 'Menu',
                 options=[app['title'] for app in self.apps],
                 icons=['house', 'pencil'],
                 menu_icon='menu-app-fill',
@@ -46,8 +49,15 @@ def display_dashboard():
 
 def register_student():
     registerStudent.runRegisterStudent()
+def faceRecognition(): 
+    face_recognition_script.main()
+def search_Student(): 
+    studentSearch.main()
+
 
 app = AutoAttedApp()
 app.add_app('Dashboard', display_dashboard)
 app.add_app('Register Student', register_student)
+app.add_app('Student Attendence', faceRecognition)
+app.add_app('Student Attendence Record', search_Student)
 app.run()
