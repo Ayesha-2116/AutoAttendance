@@ -1,10 +1,10 @@
 import streamlit as st
-import Dashboard,registerStudent
-import registerStudent, studentSearch, face_recognition_script
-import sys, os
-
-
 from streamlit_option_menu import option_menu
+import Dashboard
+import registerStudent
+import studentSearch
+import face_recognition_script
+from Login import login, user_registration
 
 st.set_page_config(
     page_title="AutoAttend Tracker",
@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-class AutoAttedApp:
+class AutoAttendApp:
 
     def __init__(self):
         self.apps = []
@@ -49,15 +49,37 @@ def display_dashboard():
 
 def register_student():
     registerStudent.runRegisterStudent()
-def faceRecognition(): 
+
+def face_recognition():
     face_recognition_script.main()
-def search_Student(): 
+
+def search_student():
     studentSearch.main()
 
+def main():
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'show_login' not in st.session_state:
+        st.session_state.show_login = True
+    if 'registered' not in st.session_state:
+        st.session_state.registered = False
 
-app = AutoAttedApp()
-app.add_app('Dashboard', display_dashboard)
-app.add_app('Register Student', register_student)
-app.add_app('Student Attendence', faceRecognition)
-app.add_app('Student Attendence Record', search_Student)
-app.run()
+    if st.session_state.logged_in:
+        app = AutoAttendApp()
+        app.add_app('Dashboard', display_dashboard)
+        app.add_app('Register Student', register_student)
+        app.add_app('Student Attendance', face_recognition)
+        app.add_app('Student Attendance Record', search_student)
+        app.run()
+    else:
+        if st.session_state.show_login and not st.session_state.registered:
+            login()
+        elif st.session_state.registered:
+            user_registration()
+            if st.button("Already registered? Login here"):
+                st.session_state.show_login = True
+                st.session_state.registered = False
+                st.experimental_rerun()
+
+if __name__ == "__main__":
+    main()

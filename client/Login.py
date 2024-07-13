@@ -1,23 +1,10 @@
 import streamlit as st
 from pymongo import MongoClient
-from Dashboard import dashboard
 import time
-#from client.Dashboard import displayDashboard
-from Dashboard import displayDashboard
-from main import AutoAttedApp
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
-
-st.set_page_config(
-    page_title="AutoAttend Tracker",
-    page_icon="🧊",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-
 
 def connect_to_mongodb(uri):
     """
@@ -27,14 +14,80 @@ def connect_to_mongodb(uri):
     db = client[DB_NAME]
     return db, db['admins']
 
+def apply_custom_css():
+    custom_css = """
+    <style>
+    body {
+        background-color: LightGray;
+    }
+    .appview-container {
+        background-color: #f0f0f0;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        margin-top: 1%;
+    }
+    #autoattend-tracker {
+        margin-left: 30%;
+        color:DodgerBlue;
+        padding: inherit;
+      
+    }
+    [data-testid="stAppViewBlockContainer"] {
+        border: 2px solid #9e9e9e;  /* gray border color */
+        padding: 20px;              /* Padding inside the section */
+        border-radius: 10px;        /* Rounded corners */
+        margin-bottom: 20px;        /* Space below the section */
+        margin-top: 6%;           /* Set your desired height */
+        width: 60%;                /* Set the width as needed */
+    }
+    .stTextInput > div > div > input[type="text"],
+    .stTextInput > div > div > input[type="password"] {
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 8px;
+        width: 100%;
+    }
+    .stTextInput > div > div > input[type="text"]:hover,
+    .stTextInput > div > div > input[type="password"]:hover {
+        outline: DodgerBlue;
+    }
+    .stButton button {
+        background-color: DodgerBlue;
+        color: white;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    .stButton button:hover {
+        background-color: #1e90ff;
+        color: white;
+    }
+    .stButton button:active {
+        background-color: #104e8b;
+        color: white;
+    }
+    .stButton button:focus {
+        outline: none;
+        color: white;
+        box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.5);
+    }
+    .stButton button:hover,
+    .stButton button:active,
+    .stButton button:focus,
+    .stButton button:visited {
+        color: white;
+    }
+    </style>
+    """
+    st.markdown(custom_css, unsafe_allow_html=True)
 
-# Connect to MongoDB
-def get_mongo_client():
-    client = MongoClient('mongodb://localhost:27017/')  # Replace with your MongoDB URI
-    return client
-
-
-def userRegistration():
+def user_registration():
+    apply_custom_css()
     st.title("AutoAttend Tracker")
     st.header('User Registration')
     fName = st.text_input('First Name', placeholder='Enter first name.')
@@ -43,7 +96,7 @@ def userRegistration():
     password = st.text_input('Password', type='password', placeholder='Enter password.')
     confirmPassword = st.text_input('Confirm Password', type='password', placeholder='Confirm password.')
     registerButton = st.button('Register')
-    
+
     if registerButton:
         if email.strip() == '' or password.strip() == '' or confirmPassword.strip() == '':
             st.error('Please fill in all required fields.')
@@ -76,6 +129,7 @@ def userRegistration():
                 st.rerun()
 
 def login():
+    apply_custom_css()
     st.title("AutoAttend Tracker")
     st.header('Login')
     email = st.text_input('Email Address', placeholder='Enter email.')
@@ -104,122 +158,9 @@ def login():
                     st.error('Invalid password. Please try again.')
             else:
                 st.error('User not found. Please try again.')
-        
+
     if st.button("New User? Register here"):
         st.session_state.show_login = False
         st.session_state.registered = True
         st.rerun()
     
-
-def main():
-    # Define your custom CSS
-    custom_css = """
-    <style>
-    .appview-container { /* background*/
-        background-color: #f0f0f0;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        margin-top: 50px
-    }
-    [data-testid="stAppViewBlockContainer"] {
-        border: 2px solid #9e9e9e;  /* gray border color */
-        padding: 20px;              /* Padding inside the section */
-        border-radius: 10px;        /* Rounded corners */
-        margin-bottom: 20px;        /* Space below the section */
-        margin-top: 90px;           /* Set your desired height */
-        width: 100%;                /* Set the width as needed */
-    }
-
-    #autoattend-tracker {
-        margin-top: -70px;
-        margin-left: 150px;
-        color: DodgerBlue;
-        /*background-color: DodgerBlue;
-        width: 250%; */
-    }
-
-    [data-testid="stVerticalBlock"] {  /* login block*/
-        margin-top: -230px
-    }
-    body {
-        background-color: LightGray;
-    }
-    .stTextInput > div > div > input[type="text"],
-    .stTextInput > div > div > input[type="password"] {
-        background-color: white;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        padding: 8px;
-        width: 100%;
-    }
-
-    .stTextInput > div > div > input[type="text"]:hover,
-    .stTextInput > div > div > input[type="password"]:hover {
-        outline: DodgerBlue;
-    }
-    .stButton button {
-        background-color: DodgerBlue;
-        color: white;
-        padding: 10px 24px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        width: 100%;
-        transition: background-color 0.3s, color 0.3s;
-    }
-
-    .stButton button:hover {
-        background-color: #1e90ff; /* Slightly lighter DodgerBlue for hover effect */
-        color: white;
-    }
-    .stButton button:active {
-        background-color: #104e8b; /* Darker blue for active (click) effect */
-        color: white;
-    }
-    .stButton button:focus {
-        outline: none; /* Remove outline when button is focused */
-        color: white;
-        box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.5); /* Add custom focus shadow */
-    }
-    .stButton button:hover,
-    .stButton button:active,
-    .stButton button:focus,
-    .stButton button:visited {
-        color: white; /* Ensure text color remains white in all states */
-    }
-        
-    </style>
-    """
-
-    # Inject the custom CSS into the app
-    st.markdown(custom_css, unsafe_allow_html=True)
-    # Create a section with custom CSS classes
-    st.markdown('<div class="appview-container">', unsafe_allow_html=True)
-    st.markdown('<div class="stHeadingContainer">', unsafe_allow_html=True)
-    st.markdown('<h1 id="autoattend-tracker">', unsafe_allow_html=True)
-    st.markdown('<div data-testid="stVerticalBlock">', unsafe_allow_html=True)
-    st.markdown('<div data-testid="stVerticalBlockBorderWrapper" data-test-scroll-behavior="normal">', unsafe_allow_html=True)
-
-    # Initialize session state for login status
-    if 'logged_in' not in st.session_state:
-        st.session_state.logged_in = False
-    if 'show_login' not in st.session_state:
-        st.session_state.show_login = True
-    if 'registered' not in st.session_state:
-         st.session_state.registered = False
-
-    if st.session_state.show_login and not st.session_state.registered:
-        login()
-    elif st.session_state.registered:
-        userRegistration()
-        if st.button("Already registered? Login here"):
-            st.session_state.show_login = True
-            st.session_state.registered = False
-            st.rerun()
-    
-    if st.session_state.logged_in:
-        dashboard()
-
-if __name__ == "__main__":
-    main()
