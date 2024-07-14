@@ -5,10 +5,12 @@ from pymongo import MongoClient
 from gridfs import GridFS
 import cv2
 from datetime import datetime, timedelta
+from SurveyEmailSender import send_survey_email  # Import the function from the module
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
+
 
 def connect_to_mongodb(uri):
     """
@@ -18,13 +20,14 @@ def connect_to_mongodb(uri):
     db = client[DB_NAME]
     return db, db['students'], db['workshops'], db['attendance'], GridFS(db)
 
+
 def get_todays_workshops(workshop_collection):
     """
     Fetches workshops scheduled for today from the database.
     """
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
-    
+
     workshops = workshop_collection.find({
         'date': {
             '$gte': today_start,
@@ -32,6 +35,7 @@ def get_todays_workshops(workshop_collection):
         }
     })
     return {w['workshopName']: w['workshopId'] for w in workshops}
+
 
 @st.cache_data(ttl=60)  # Cache for 1 minute
 def load_registered_students(workshop_id, db_name, uri):
@@ -48,13 +52,13 @@ def load_registered_students(workshop_id, db_name, uri):
         "workshopId": workshop_id,
         "present": False
     })
-    
+
     known_face_encodings, student_ids, student_names = [], [], []
 
     for registered_student in registered_students:
         student_id = registered_student['username']
         student = student_collection.find_one({"studentID": student_id})
-        
+
         if student and 'profile_image_id' in student:
             profile_image_id = student['profile_image_id']
             face_encoding = get_face_encoding(profile_image_id, fs)
@@ -70,6 +74,7 @@ def load_registered_students(workshop_id, db_name, uri):
     client.close()
     return known_face_encodings, student_ids, student_names
 
+
 def get_face_encoding(profile_image_id, fs):
     """
     Retrieves and processes a student's profile image to get face encoding.
@@ -79,7 +84,9 @@ def get_face_encoding(profile_image_id, fs):
     face_encodings = face_recognition.face_encodings(image)
     return face_encodings[0] if face_encodings else None
 
-def process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id, attendance_collection):
+
+def process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id, attendance_collection,
+                       students_collection, presenter_id):
     """
     Processes the captured image for face recognition and marks attendance.
     """
@@ -106,9 +113,15 @@ def process_attendance(image, known_face_encodings, student_ids, student_names, 
                     "present": True
                 }}
             )
+            student_details = students_collection.find_one({"studentID": student_id})
+            if student_details:
+                student_email = student_details.get('email')
+                student_name = f"{student_details.get('firstName')} {student_details.get('lastName')}"
+                send_survey_email(student_email, student_name, workshop_id, presenter_id)
             return f"Attendance marked for {student_name}"
 
     return "Face not recognized or student not registered for this workshop"
+
 
 def main():
     st.title("Workshop Attendance System")
@@ -125,6 +138,7 @@ def main():
 
     workshop_name = st.selectbox("Select Workshop", list(workshop_list.keys()))
     workshop_id = workshop_list[workshop_name]
+    presenter_id = workshop_collection.find_one({"workshopId": workshop_id}).get("presenter", {}).get("presenterID")
 
     # Load registered students
     known_face_encodings, student_ids, student_names = load_registered_students(
@@ -142,9 +156,11 @@ def main():
 
     if img_file_buffer:
         image = cv2.imdecode(np.frombuffer(img_file_buffer.read(), dtype=np.uint8), cv2.IMREAD_COLOR)
-        result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id, attendance_collection)
+        result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id,
+                                    attendance_collection, student_collection, presenter_id)
         st.success(result)
         img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
+
 
 if __name__ == "__main__":
     main()
