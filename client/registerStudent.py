@@ -5,116 +5,163 @@ import numpy as np
 import base64
 from pymongo import MongoClient
 from io import BytesIO
-# Apply custom CSS style
-st.markdown("""
-    <style>
-        /* Define your CSS rules here */
-        body {
-            background-color: LightGray;
-        }
-        .stTextInput > div > div > input[type="text"],
-        .stTextInput > div > div > input[type="password"] {
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 8px;
-            width: 100%;
-        }
-        
-        .stTextInput > div > div > input[type="text"]:hover,
-        .stTextInput > div > div > input[type="password"]:hover {
-            outline: DodgerBlue;
-        }
-        .stButton button {
-            background-color: DodgerBlue;
-            color: white;
-            padding: 10px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s, color 0.3s;
-        }
-    
-        .stButton button:hover {
-            background-color: #1e90ff; /* Slightly lighter DodgerBlue for hover effect */
-            color: white;
-        }
-        .stButton button:active {
-            background-color: #104e8b; /* Darker blue for active (click) effect */
-            color: white;
-        }
-        .stButton button:focus {
-            outline: none; /* Remove outline when button is focused */
-            color: white;
-            box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.5); /* Add custom focus shadow */
-        }
-        .stButton button:hover,
-        .stButton button:active,
-        .stButton button:focus,
-        .stButton button:visited {
-            color: white; /* Ensure text color remains white in all states */
-        }
-        
-        .appview-container { /* background*/
-        background-color: #f0f0f0;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        margin-top: 50px
-        }
-
-        [data-testid="stSidebar"] {
-            background-color: #DCDCDC;  
-        }
-            
-        [playsinline] {
-            border-left: 2px solid DodgerBlue; /* Left border */
-            border-right: 2px solid DodgerBlue; /* Right border */
-            padding: 1px;              /* Padding inside the section */
-            border-radius: 10px;        /* Rounded corners */
-            margin-bottom: 20px;        /* Space below the section */
-            margin-top: 10px;           /* Set your desired height */
-            width: 100%;                /* Set the width as needed */
-        }
-        
-        [data-testid="stCameraInputButton"] { /* this is text below camera*/
-            content: 'Capture Photo';
-            font-weight: 400;
-            background-color: DodgerBlue;
-            color: white;
-            height: 45px;
-            border-radius: 6px;
-        }
-            
-        [data-testid="stVerticalBlock"] {  /* login block*/
-            margin-top: -100px
-    }
-    </style>
-""", unsafe_allow_html=True) 
 
 
 
-# Connect to MongoDB (Make sure your MongoDB server is running)
+# Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['Attendence']
 collection = db['students']
 
-# Streamlit interface
-st.title('Register Student Records')
+# MongoDB connection details
+URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+DB_NAME = 'attendance_system'
 
-# Input fields for student name and ID
-# Input fields for student name and ID
-placeholder_student_name = st.empty()
-placeholder_student_id = st.empty()
-placeholder_camera = st.empty()
-student_name = placeholder_student_name.text_input('Enter Student Name:',  key='student_name_input1')
-student_id = placeholder_student_id.text_input('Enter Student ID:', key='student_id_input1')
+def connect_to_mongodb(uri):
+    """
+    Establishes a connection to MongoDB and returns the database and required collections.
+    """
+    client = MongoClient(uri)
+    db = client[DB_NAME]
+    return db, db['students']
 
+def runRegisterStudent():
+    # Apply custom CSS style
+    st.markdown("""
+        <style>
+            #autoattend-tracker {
+                margin-left: auto;
+                color:DodgerBlue;
+                padding: inherit;
+            
+            }
+            .header-section {
+                background-color: #f0f2f6;
+                /*padding: 20px;*/
+                border-radius: 10px;
+                color: DodgerBlue;
+                text-align: center;
+                margin-bottom: 20px;
+                font-size: 2.5em;
+                font-weight: bold;
+                position: fixed;
+                top: 7%;
+                left: 0;
+                width: 100%;
+                z-index: 1000;
+                margin-left: auto;
+                margin-right: auto;
+                
+            }
+           
+            .stTextInput > div > div > input[type="text"],
+            .stTextInput > div > div > input[type="password"] {
+                background-color: white;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                padding: 8px;
+                width: 100%;
+            }
+            .stTextInput > div > div > input[type="text"]:hover,
+            .stTextInput > div > div > input[type="password"]:hover {
+                outline: DodgerBlue;
+            }
+            .stButton button {
+                background-color: DodgerBlue;
+                color: white;
+                padding: 10px 24px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                width: 100%;
+                transition: background-color 0.3s, color 0.3s;
+            }
+            .stButton button:hover {
+                background-color: #1e90ff;
+                color: white;
+            }
+            .stButton button:active {
+                background-color: #104e8b;
+                color: white;
+            }
+            .stButton button:focus {
+                outline: none;
+                color: white;
+                box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.5);
+            }
+            .stButton button:hover,
+            .stButton button:active,
+            .stButton button:focus,
+            .stButton button:visited {
+                color: white;
+            }
+            
+           
+            [playsinline] {
+                border-left: 2px solid DodgerBlue;
+                border-right: 2px solid DodgerBlue;
+                padding: 1px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                margin-top: 10px;
+                width: 100%;
+            }
+            [data-testid="stCameraInputButton"] {
+                content: 'Capture Photo';
+                font-weight: 400;
+                background-color: DodgerBlue;
+                color: white;
+                height: 45px;
+                border-radius: 6px;
+            }
+           /* [data-testid="stVerticalBlock"] {
+                margin-top: -100px
+            }
+                */
+                
+            [data-testid="stVerticalBlockBorderWrapper"]{ /* block content width*/
+                width: 80%;
+            }
+                }
+        </style>
+    """, unsafe_allow_html=True)
+    # Streamlit interface
+    st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
+    st.markdown('### Register Student Records')
+    #st.title('Register Student Records')
 
-def save_to_mongodb(name, student_id, image):
+    # Placeholders for input fields
+    placeholder_student_name = st.empty()
+    placeholder_student_lname = st.empty()
+    placeholder_student_id = st.empty()
+    placeholder_student_email = st.empty()
+    placeholder_camera = st.empty()
+
+    # Input fields for student name and ID
+    student_fname = placeholder_student_name.text_input('Enter First Name:', key='student_name_input')
+    student_lname = placeholder_student_lname.text_input('Enter Last Name:', key='student_lname_input')
+    student_id = placeholder_student_id.text_input('Enter Student ID:', key='student_id_input')
+    student_email = placeholder_student_email.text_input('Enter Student Email:', key='placeholder_student_email')
+
+    # Camera input
+    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='camera_input')
+
+    if img_file_buffer is not None:
+        # To read image file buffer with OpenCV:
+        bytes_data = img_file_buffer.getvalue()
+        cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+
+    # Save button to save data to MongoDB
+    if st.button('Save Data'):
+        if student_fname.strip() != '' and student_lname.strip()!='' and student_id.strip() != '' and student_email.strip() != '' and img_file_buffer is not None:
+            save_to_mongodb(student_fname,student_lname, student_id, student_email,cv2_img, placeholder_student_name,placeholder_student_lname, placeholder_student_id,placeholder_student_email, placeholder_camera)
+        else:
+            st.warning('Please enter student name, student ID, and capture a photo before saving.')
+
+def save_to_mongodb(student_fname,student_lname, student_id,student_email, image, placeholder_student_name,placeholder_student_lname, placeholder_student_id, placeholder_student_email,placeholder_camera):
     # Check if student ID already exists
-    existing_student = collection.find_one({'student_id': student_id})
+    db, students_collection = connect_to_mongodb(URI)
+    existing_student = students_collection.find_one({'studentID': student_id})
     
     if existing_student:
         st.warning(f"Student with ID '{student_id}' already exists. Please use a different student ID.")
@@ -128,34 +175,19 @@ def save_to_mongodb(name, student_id, image):
 
     # Prepare document to insert into MongoDB
     document = {
-        'name': name,
-        'student_id': student_id,
-        'photo': image_base64
+        'firstName': student_fname,
+        'lastName':student_lname,
+        'studentID': student_id,
+        'email': student_email,
+        'profile_image_id': image_base64
     }
 
     # Insert document into MongoDB collection
-    collection.insert_one(document)
+    students_collection.insert_one(document)
     st.success('Data saved successfully!')
-    #code to refresh fields
-    student_name = placeholder_student_name.text_input('Enter Student Name:',  key='student_name_input2')
-    student_id = placeholder_student_id.text_input('Enter Student ID:', key='student_id_input2')
-    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
-   
-
-# Camera input
-img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
-
-if img_file_buffer is not None:
-    # To read image file buffer with OpenCV:
-    bytes_data = img_file_buffer.getvalue()
-    cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-
-    # Display the captured image
-    #st.image(cv2_img, channels="BGR")
-
-# Save button to save data to MongoDB
-if st.button('Save Data'):
-    if student_name.strip() != '' and student_id.strip() != '' and img_file_buffer is not None:
-        save_to_mongodb(student_name, student_id, cv2_img)
-    else:
-        st.warning('Please enter student name, student ID, and capture a photo before saving.')
+    # Refresh fields
+    placeholder_student_name.text_input('Enter Student Name:', key='student_name_input2')
+    placeholder_student_lname.text_input('Enter Last Name:', key='student_lname_input2')
+    placeholder_student_id.text_input('Enter Student ID:', key='student_id_input2')
+    placeholder_student_email.text_input('Enter Student Email:', key='placeholder_student_email2')
+    placeholder_camera.camera_input("Capture Photo", key='camera_input2')
