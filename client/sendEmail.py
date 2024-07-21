@@ -18,7 +18,6 @@ def connect_to_mongodb(uri):
     students_collection = db['students']
     attendance_collection = db['attendance']
 
-    # Retrieve studentID, firstName, and lastName
     students = students_collection.find({}, {'studentID': 1, 'firstName': 1, 'lastName': 1, 'email': 1})
     attendance_count = defaultdict(lambda: {'count': 0, 'email': ''})
 
@@ -95,9 +94,14 @@ st.title("Schedule Email (Weekly)")
 user_selected_day = st.selectbox("Day:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
 task_hour = st.number_input("Hour:", min_value=0, max_value=23, value=9)
 task_minute = st.number_input("Minute:", min_value=0, max_value=59, value=0)
+selected_time = f"{task_hour:02d}:{task_minute:02d}"
+if task_hour >= 12:
+    selected_time += " PM"
+else:
+    selected_time += " AM"
 
 st.write(f"Selected day: {user_selected_day}")
-st.write(f"Selected time: {task_hour:02d}:{task_minute:02d}")
+st.write(f"Selected time: {selected_time}")
 
 
 
