@@ -89,33 +89,34 @@ def run_scheduler():
         schedule.run_pending()
         time.sleep(1)
 
-st.title("Schedule Email (Weekly)")
+def email_schedule_ui():
+    st.title("Schedule Email (Weekly)")
 
-user_selected_day = st.selectbox("Day:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-task_hour = st.number_input("Hour:", min_value=0, max_value=23, value=9)
-task_minute = st.number_input("Minute:", min_value=0, max_value=59, value=0)
-selected_time = f"{task_hour:02d}:{task_minute:02d}"
-if task_hour >= 12:
-    selected_time += " PM"
-else:
-    selected_time += " AM"
+    user_selected_day = st.selectbox("Day:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+    task_hour = st.number_input("Hour:", min_value=0, max_value=23, value=9)
+    task_minute = st.number_input("Minute:", min_value=0, max_value=59, value=0)
+    selected_time = f"{task_hour:02d}:{task_minute:02d}"
+    if task_hour >= 12:
+        selected_time += " PM"
+    else:
+        selected_time += " AM"
 
-st.write(f"Selected day: {user_selected_day}")
-st.write(f"Selected time: {selected_time}")
-
-
-
-if st.button("Schedule"):
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
-    st.success("Schedule has been triggered!")
+    st.write(f"Selected day: {user_selected_day}")
+    st.write(f"Selected time: {selected_time}")
 
 
 
-st.title("Email now")
-if st.button("Send Email"):
-    job()
-    st.success("Email sent!")
+    if st.button("Schedule"):
+        scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+        scheduler_thread.start()
+        st.success("Schedule has been triggered!")
+
+
+
+    st.title("Email now")
+    if st.button("Send Email"):
+        job()
+        st.success("Email sent!")
 
 
 

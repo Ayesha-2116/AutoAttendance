@@ -3,8 +3,9 @@ from streamlit_option_menu import option_menu
 import Dashboard
 import registerStudent
 import studentSearch
-import face_recognition_script
+import face_recognition_script, workshop_data_entry
 from Login import login, user_registration
+import sendEmail
 
 st.set_page_config(
     page_title="AutoAttend Tracker",
@@ -29,7 +30,7 @@ class AutoAttendApp:
             app = option_menu(
                 menu_title= 'Menu',
                 options=[app['title'] for app in self.apps],
-                icons=['house', 'pencil'],
+                icons=['house','person-plus','camera', 'book','briefcase'],
                 menu_icon='menu-app-fill',
                 default_index=0,
                 styles={
@@ -55,6 +56,13 @@ def face_recognition():
 
 def search_student():
     studentSearch.main()
+def workshopData():
+    workshop_data_entry.main()
+
+def schedule_email():
+    sendEmail.email_schedule_ui()
+
+
 
 def main():
     if 'logged_in' not in st.session_state:
@@ -68,8 +76,10 @@ def main():
         app = AutoAttendApp()
         app.add_app('Dashboard', display_dashboard)
         app.add_app('Register Student', register_student)
-        app.add_app('Student Attendance', face_recognition)
+        app.add_app('Attendance', face_recognition)
         app.add_app('Student Attendance Record', search_student)
+        app.add_app('Workshop Record', workshopData)
+        app.add_app('Schedule Email', schedule_email)
         app.run()
     else:
         if st.session_state.show_login and not st.session_state.registered:
