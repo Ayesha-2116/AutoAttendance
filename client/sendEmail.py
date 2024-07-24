@@ -7,12 +7,16 @@ import threading
 import streamlit as st
 from pymongo import MongoClient
 from collections import defaultdict
+import applyCss
 
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
 
 def sendEmailMain():
-    st.title("Schedule Email (Weekly)")
+    applyCss.apply_custom_css()
+    st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
+    st.markdown('### Schedule Email (Weekly)')
+    #st.title("Schedule Email (Weekly)")
 
     user_selected_day = st.selectbox("Day:",
                                      ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
@@ -32,7 +36,9 @@ def sendEmailMain():
         scheduler_thread.start()
         st.success("Schedule has been triggered!")
 
-    st.title("Email now")
+
+    st.markdown('### Email now')
+    #st.title("Email now")
     if st.button("Send Email"):
         job()
         st.success("Email sent!")

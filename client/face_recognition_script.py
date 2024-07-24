@@ -6,6 +6,7 @@ from gridfs import GridFS
 import cv2
 from datetime import datetime, timedelta
 from SurveyEmailSender import send_survey_email  # Import the function from the module
+import applyCss
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -124,7 +125,10 @@ def process_attendance(image, known_face_encodings, student_ids, student_names, 
 
 
 def main():
-    st.title("Workshop Attendance System")
+    applyCss.apply_custom_css()
+    st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
+    st.markdown('### Workshop Attendance System')
+    #st.title("Workshop Attendance System")
 
     # Connect to MongoDB
     db, student_collection, workshop_collection, attendance_collection, fs = connect_to_mongodb(URI)

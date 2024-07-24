@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pymongo import MongoClient
 from collections import defaultdict
+import applyCss
 
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
@@ -43,6 +44,9 @@ def connect_to_mongodb(uri):
 
 
 def getStudentRecords():
+    applyCss.apply_custom_css()
+    st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
+    
     attendance_info = connect_to_mongodb(URI)
 
     df_attendance = pd.DataFrame.from_dict(attendance_info, orient='index')
@@ -50,6 +54,8 @@ def getStudentRecords():
 
     columns = ['Total Count'] + [col for col in df_attendance.columns if col != 'Total Count']
     df_attendance = df_attendance[columns]
-
-    st.subheader("Students Workshop Attendance Record")
+    st.markdown('### Students Workshop Attendance Record')
+    #st.subheader("Students Workshop Attendance Record")
     st.dataframe(df_attendance)
+
+getStudentRecords()

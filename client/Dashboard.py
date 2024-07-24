@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import applyCss
 
 #st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
@@ -40,7 +41,7 @@ def apply_custom_css():
 
 def displayDashboard():
     
-    apply_custom_css()
+    applyCss.apply_custom_css()
     # Top section with background color
     st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
     st.markdown('### Dashboard')
