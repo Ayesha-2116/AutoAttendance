@@ -6,8 +6,8 @@ from email.mime.text import MIMEText
 
 def send_survey_email(student_email, student_name, workshop_id, presenter_id):
     # Email credentials
-    sender_email = "ayesha21nov16@gmail.com"
-    sender_password = "Ayesha@123#"
+    sender_email = "ayeshas@uwindsor.ca"
+    sender_password = "test@123#"
 
     # Email content
     subject = "Workshop Feedback Survey"
