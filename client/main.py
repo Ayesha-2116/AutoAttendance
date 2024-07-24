@@ -28,9 +28,9 @@ class AutoAttendApp:
     def run(self):
         with st.sidebar:
             app = option_menu(
-                menu_title= 'Menu',
+                menu_title='Menu',
                 options=[app['title'] for app in self.apps],
-                icons=['house','person-plus','camera', 'book','briefcase'],
+                icons=['house', 'person-plus', 'camera', 'book', 'briefcase'],
                 menu_icon='menu-app-fill',
                 default_index=0,
                 styles={

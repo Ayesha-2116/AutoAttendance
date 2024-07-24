@@ -1,11 +1,13 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import applyCss
 from pymongo import MongoClient
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
+
 
 def connect_to_mongodb(uri):
     """
@@ -15,51 +17,19 @@ def connect_to_mongodb(uri):
     db = client[DB_NAME]
     return db, db['attendance'], db['workshops'], db['students']
 
+
 #st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
-def apply_custom_css():
-    custom_css = """
-    <style>
-   
-    #autoattend-tracker {
-        margin-left: auto;
-        color:DodgerBlue;
-        padding: inherit;
-      
-    }
-    .header-section {
-        background-color: #f0f2f6;
-        /*padding: 20px;*/
-        border-radius: 10px;
-        color: DodgerBlue;
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 2.5em;
-        font-weight: bold;
-        position: fixed;
-        top: 7%;
-        left: 0;
-        width: 100%;
-        z-index: 1000;
-        margin-left: auto;
-        margin-right: auto;
-        
-    }
-    
-    
-    </style>
-    """
-    st.markdown(custom_css, unsafe_allow_html=True)
 
 def fetch_workshop_data():
     db, attendance_collection, workshops_collection, _ = connect_to_mongodb(URI)
-    
+
     # Fetch attendance data
     attendance = list(attendance_collection.find())
-    
+
     # Get the list of workshop IDs present in the attendance data
     attended_workshop_ids = set(a['workshopId'] for a in attendance)
-    
+
     # Fetch only the workshops that have entries in the attendance data
     workshops = list(workshops_collection.find({"workshopId": {"$in": list(attended_workshop_ids)}}))
 
@@ -68,18 +38,19 @@ def fetch_workshop_data():
         workshop_id = workshop['workshopId']
         present_count = sum(1 for a in attendance if a['workshopId'] == workshop_id and a['present'] == True)
         absent_count = sum(1 for a in attendance if a['workshopId'] == workshop_id and a['present'] == False)
-        
+
         workshop_data.append({
             "Workshop Title": workshop['workshopName'],
             "Present": present_count,
             "Absent": absent_count
         })
-    
+
     return pd.DataFrame(workshop_data)
+
 
 # Function to Display the Dashboard Charts :
 def displayDashboard():
-    apply_custom_css()
+    applyCss.apply_custom_css()
     # Top section with background color
     st.markdown('<div cl="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
     st.markdown('### Dashboard')
@@ -91,14 +62,13 @@ def displayDashboard():
     #CHART No.2 : ---------------------------------
     late_arrival_data = {
         "Workshop Title": [
-        "Intro to AI", "Basics of Big Data", "Information Retrieval Systems",
-        "Advanced Python", "Data Visualization", "Machine Learning Basics",
-        "Deep Learning", "Natural Language Processing", "Computer Vision",
-        "Ethics in AI"
+            "Intro to AI", "Basics of Big Data", "Information Retrieval Systems",
+            "Advanced Python", "Data Visualization", "Machine Learning Basics",
+            "Deep Learning", "Natural Language Processing", "Computer Vision",
+            "Ethics in AI"
         ],
         "Late Arrival": [12, 4, 16, 1, 1, 3, 7, 2, 5, 13]
     }
-
 
     df_late_arrivals = pd.DataFrame(late_arrival_data)
 
@@ -109,7 +79,6 @@ def displayDashboard():
         "Rating": [3, 2.5, 5, 3.5]
     }
 
-
     df_presenters = pd.DataFrame(presenter_data)
 
     #CHART No.4 : ---------------------------------
@@ -119,18 +88,16 @@ def displayDashboard():
         "Rating": [4, 3.5, 2, 4.5]
     }
 
-
     df_workshop_ratings = pd.DataFrame(workshop_rating_data)
 
-
- # Create and display the chart in columns
+    # Create and display the chart in columns
     col1, col2 = st.columns(2)
 
     # Chart 1: Student attendance in workshops
     with col1:
         fig_workshops = px.bar(df_workshops, x='Workshop Title', y=['Present', 'Absent'], barmode='group',
-                            labels={'value': 'Number of Students', 'variable': 'Attendance'},
-                            title="Student's Attendance in Workshops")
+                               labels={'value': 'Number of Students', 'variable': 'Attendance'},
+                               title="Student's Attendance in Workshops")
         fig_workshops.update_layout(xaxis_tickangle=90)  # Change to 90 degrees to make titles vertical
         st.plotly_chart(fig_workshops)
 
@@ -138,8 +105,8 @@ def displayDashboard():
     with col2:
         # st.subheader("Number of Students that Arrived Late in the Past Three Weeks")
         fig_late_arrivals = px.bar(df_late_arrivals, x='Workshop Title', y='Late Arrival',
-                                labels={'Late Arrival': 'Number of Students', 'Workshop Title': 'Workshop Title'},
-                                title='Late Arrivals')
+                                   labels={'Late Arrival': 'Number of Students', 'Workshop Title': 'Workshop Title'},
+                                   title='Late Arrivals')
         fig_late_arrivals.update_traces(marker_color='orange')
         st.plotly_chart(fig_late_arrivals)
 
@@ -167,5 +134,6 @@ def displayDashboard():
 
         )
         st.plotly_chart(fig_workshop_ratings)
+
 
 displayDashboard()

@@ -119,9 +119,9 @@ def runRegisterStudent():
             }
                 */
                 
-            [data-testid="stVerticalBlockBorderWrapper"]{ /* block content width*/
-                width: 80%;
-            }
+            # [data-testid="stVerticalBlockBorderWrapper"]{ /* block content width*/
+            #     width: 70%;
+            # }
                 }
         </style>
     """, unsafe_allow_html=True)
