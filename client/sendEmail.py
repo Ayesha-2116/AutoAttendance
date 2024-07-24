@@ -11,6 +11,32 @@ from collections import defaultdict
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME = 'attendance_system'
 
+def sendEmailMain():
+    st.title("Schedule Email (Weekly)")
+
+    user_selected_day = st.selectbox("Day:",
+                                     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+    task_hour = st.number_input("Hour:", min_value=0, max_value=23, value=9)
+    task_minute = st.number_input("Minute:", min_value=0, max_value=59, value=0)
+    selected_time = f"{task_hour:02d}:{task_minute:02d}"
+    if task_hour >= 12:
+        selected_time += " PM"
+    else:
+        selected_time += " AM"
+
+    st.write(f"Selected day: {user_selected_day}")
+    st.write(f"Selected time: {selected_time}")
+
+    if st.button("Schedule"):
+        scheduler_thread = threading.Thread(target=run_scheduler, args=(user_selected_day, task_hour, task_minute), daemon=True)
+        scheduler_thread.start()
+        st.success("Schedule has been triggered!")
+
+    st.title("Email now")
+    if st.button("Send Email"):
+        job()
+        st.success("Email sent!")
+
 def connect_to_mongodb(uri):
     client = MongoClient(uri)
     db = client[DB_NAME]
@@ -66,7 +92,7 @@ def job():
         send_email(subject, body, to_email, from_email, password)
 
 
-def schedule_task():
+def schedule_task(user_selected_day, task_hour, task_minute):
     if user_selected_day == "Monday":
         schedule.every().monday.at(f"{task_hour:02}:{task_minute:02}").do(job)
     elif user_selected_day == "Tuesday":
@@ -82,40 +108,18 @@ def schedule_task():
     elif user_selected_day == "Sunday":
         schedule.every().sunday.at(f"{task_hour:02}:{task_minute:02}").do(job)
 
-def run_scheduler():
-    schedule_task()
+
+def run_scheduler(user_selected_day, task_hour, task_minute):
+    schedule_task(user_selected_day, task_hour, task_minute)
     # schedule.every().saturday.at("09:00").do(job)
     while True:
         schedule.run_pending()
         time.sleep(1)
 
-st.title("Schedule Email (Weekly)")
-
-user_selected_day = st.selectbox("Day:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-task_hour = st.number_input("Hour:", min_value=0, max_value=23, value=9)
-task_minute = st.number_input("Minute:", min_value=0, max_value=59, value=0)
-selected_time = f"{task_hour:02d}:{task_minute:02d}"
-if task_hour >= 12:
-    selected_time += " PM"
-else:
-    selected_time += " AM"
-
-st.write(f"Selected day: {user_selected_day}")
-st.write(f"Selected time: {selected_time}")
 
 
 
-if st.button("Schedule"):
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
-    st.success("Schedule has been triggered!")
 
-
-
-st.title("Email now")
-if st.button("Send Email"):
-    job()
-    st.success("Email sent!")
 
 
 

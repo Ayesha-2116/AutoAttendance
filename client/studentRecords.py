@@ -41,16 +41,15 @@ def connect_to_mongodb(uri):
     return attendance_info
 
 
-attendance_info = connect_to_mongodb(URI)
 
+def getStudentRecords():
+    attendance_info = connect_to_mongodb(URI)
 
-df_attendance = pd.DataFrame.from_dict(attendance_info, orient='index')
-df_attendance['Total Count'] = df_attendance.count(axis=1)
+    df_attendance = pd.DataFrame.from_dict(attendance_info, orient='index')
+    df_attendance['Total Count'] = df_attendance.count(axis=1)
 
+    columns = ['Total Count'] + [col for col in df_attendance.columns if col != 'Total Count']
+    df_attendance = df_attendance[columns]
 
-columns = ['Total Count'] + [col for col in df_attendance.columns if col != 'Total Count']
-df_attendance = df_attendance[columns]
-
-
-st.subheader("Students Workshop Attendance Record")
-st.dataframe(df_attendance)
+    st.subheader("Students Workshop Attendance Record")
+    st.dataframe(df_attendance)
