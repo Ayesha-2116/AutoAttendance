@@ -1,46 +1,14 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import applyCss
 
 #st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
-def apply_custom_css():
-    custom_css = """
-    <style>
-   
-    #autoattend-tracker {
-        margin-left: auto;
-        color:DodgerBlue;
-        padding: inherit;
-      
-    }
-    .header-section {
-        background-color: #f0f2f6;
-        /*padding: 20px;*/
-        border-radius: 10px;
-        color: DodgerBlue;
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 2.5em;
-        font-weight: bold;
-        position: fixed;
-        top: 7%;
-        left: 0;
-        width: 100%;
-        z-index: 1000;
-        margin-left: auto;
-        margin-right: auto;
-        
-    }
-    
-    
-    </style>
-    """
-    st.markdown(custom_css, unsafe_allow_html=True)
 
 def displayDashboard():
     
-    apply_custom_css()
+    applyCss.apply_custom_css()
     # Top section with background color
     st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
     st.markdown('### Dashboard')
