@@ -101,43 +101,56 @@ def insert_attendance(username, workshop_id, in_time, present):
     }
     db.attendance.insert_one(attendance_record)
  
-# Function to insert workshop
 def insert_workshop(workshop_details, presenter_details):
-    date = workshop_details['date']
-    time = workshop_details['time']
-    combined_datetime = datetime.combine(date, time)
- 
+    # Check if presenter already exists
+    presenter = db.presenters.find_one({"username": presenter_details['username']})
+    
+    if not presenter:
+        # Insert presenter details into presenters collection
+        presenter_record = {
+            "presenterID": presenter_details['presenterID'],
+            "username": presenter_details['username'],
+            "email": presenter_details['email'],
+            "firstName": presenter_details['firstName'],
+            "lastName": presenter_details['lastName'],
+            "qualification": presenter_details.get('qualification', ''),
+        }
+        presenter_id = db.presenters.insert_one(presenter_record).inserted_id
+    else:
+        presenter_id = presenter['_id']
+
+    # Create workshop document with reference to presenter
+    combined_datetime = datetime.combine(workshop_details['date'], workshop_details['time'])
     workshop_record = {
         "workshopId": workshop_details['workshopId'],
         "workshopName": workshop_details['workshopName'],
         "date": combined_datetime,
         "location": workshop_details['location'],
-        "presenter": presenter_details,
-        "wReview": workshop_details['wReview']
+        "presenter_id": presenter_id,  # Reference to presenter
     }
     db.workshops.insert_one(workshop_record)
     st.success("Workshop added successfully.")
- 
+
 # Helper functions to get presenter details
 def get_presenter_id_by_username(username):
-    workshop = db.workshops.find_one({"presenter.username": username}, {"_id": 0, "presenter.presenterID": 1})
-    return workshop['presenter']['presenterID'] if workshop and 'presenter' in workshop else None
+    presenter = db.presenters.find_one({"username": username}, {"_id": 1})
+    return presenter['_id'] if presenter else None
  
 def get_presenter_email_by_username(username):
-    workshop = db.workshops.find_one({"presenter.username": username}, {"_id": 0, "presenter.email": 1})
-    return workshop['presenter']['email'] if workshop and 'presenter' in workshop else None
+    presenter = db.presenters.find_one({"username": username}, {"email": 1})
+    return presenter['email'] if presenter else None
  
 def get_presenter_firstName_by_username(username):
-    workshop = db.workshops.find_one({"presenter.username": username}, {"_id": 0, "presenter.firstName": 1})
-    return workshop['presenter']['firstName'] if workshop and 'presenter' in workshop else None
+    presenter = db.presenters.find_one({"username": username}, {"firstName": 1})
+    return presenter['firstName'] if presenter else None
  
 def get_presenter_lastName_by_username(username):
-    workshop = db.workshops.find_one({"presenter.username": username}, {"_id": 0, "presenter.lastName": 1})
-    return workshop['presenter']['lastName'] if workshop and 'presenter' in workshop else None
+    presenter = db.presenters.find_one({"username": username}, {"lastName": 1})
+    return presenter['lastName'] if presenter else None
  
 def get_presenter_usernames():
-    workshops = db.workshops.find({}, {"_id": 0, "presenter.username": 1})
-    presenter_usernames = [workshop['presenter']['username'] for workshop in workshops]
+    presenters = db.presenters.find({}, {"username": 1})
+    presenter_usernames = [presenter['username'] for presenter in presenters]
     return presenter_usernames
  
 # Streamlit app
@@ -219,13 +232,12 @@ def main():
                 email = st.text_input("Email")
                 first_name = st.text_input("First Name")
                 last_name = st.text_input("Last Name")
-                p_review = st.text_area("Presenter Review", "")
+                qualification = st.text_input("Qualification")
                 workshop_id = st.text_input("Workshop ID")
                 workshop_name = st.text_input("Workshop Name")
                 date = st.date_input("Date", min_value=datetime.today())
                 time = st.time_input("Time")
                 location = st.text_input("Location")
-                w_review = st.text_area("Workshop Review", "")
                 submit_button = st.form_submit_button("Submit")
  
                 if submit_button:
@@ -235,7 +247,7 @@ def main():
                         "email": email,
                         "firstName": first_name,
                         "lastName": last_name,
-                        "pReview": p_review
+                        "qualification": qualification
                     }
                     workshop_details = {
                         "workshopId": workshop_id,
@@ -243,7 +255,6 @@ def main():
                         "date": date,
                         "time": time,
                         "location": location,
-                        "wReview": w_review
                     }
                     insert_workshop(workshop_details, presenter_details)
                     st.session_state.add_presenter_mode = False
@@ -268,7 +279,6 @@ def main():
                     date = st.date_input("Date", min_value=datetime.today())
                     time = st.time_input("Time")
                     location = st.text_input("Location")
-                    w_review = st.text_area("Workshop Review", "")
  
                     if st.button("Add Workshop"):
                         workshop_details = {
@@ -277,7 +287,6 @@ def main():
                             "date": date,
                             "time": time,
                             "location": location,
-                            "wReview": w_review
                         }
                         insert_workshop(workshop_details, presenter_details)
  
