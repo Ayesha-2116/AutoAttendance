@@ -163,9 +163,9 @@ def main():
         st.warning("No registered students found for the selected workshop.")
         return
 
-        placeholder_camera = st.empty()
+        
 
-
+placeholder_camera = st.empty()
 # Capture photo
 img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
 
