@@ -40,6 +40,9 @@ class AutoAttendApp:
                     "nav-link-selected": {"background-color": "#007BFF"},
                 }
             )
+            if st.button('Logout'):
+                logout()
+
         for app_dict in self.apps:
             if app_dict['title'] == app:
                 app_dict['function']()
@@ -66,7 +69,11 @@ def schedule_email():
 def student_record():
     studentRecords.getStudentRecords()
 
-
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.show_login = True
+    st.session_state.registered = False
+    st.experimental_rerun()
 
 def main():
     if 'logged_in' not in st.session_state:
