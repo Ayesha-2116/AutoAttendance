@@ -239,6 +239,8 @@ def main():
                 time = st.time_input("Time")
                 location = st.text_input("Location")
                 submit_button = st.form_submit_button("Submit")
+                st.session_state.add_presenter_mode = False
+
  
                 if submit_button:
                     presenter_details = {
