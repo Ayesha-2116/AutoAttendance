@@ -1,8 +1,9 @@
-def send_survey_email(student_email, student_name, form_url):
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
+
+def send_survey_email(student_email, student_name, form_url):
     sender_email = "bivektest97@gmail.com"
     sender_password = "ypxt tsbh okvx qali"
 
