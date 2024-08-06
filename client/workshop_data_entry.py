@@ -183,7 +183,7 @@ def main():
                     return
  
                 # Check if all student IDs exist in the student table
-                student_ids = df['Student_ID'].tolist()
+                student_ids = df['Student_ID'].astype(str).tolist()
                 existing_students = db.students.find({'studentID': {'$in': student_ids}})
                 existing_student_ids = {student['studentID'] for student in existing_students}
  
@@ -194,7 +194,7 @@ def main():
  
                 # Insert attendance records
                 for index, row in df.iterrows():
-                    student_id = row['Student_ID']
+                    student_id = str(row['Student_ID'])
                     student_name = row['Student Name']
                     workshop_name = row['Workshop Name']
  
@@ -208,8 +208,7 @@ def main():
                         # Fetch username from students table based on student_id
                         student = db.students.find_one({'studentID': student_id})
                         if student:
-                            username = student['username']
-                            insert_attendance(username, workshop_id, in_time, present)
+                            insert_attendance(student_id, workshop_id, in_time, present)
                             st.success(f"Attendance recorded for {student_name} at {workshop_name}.")
                     else:
                         st.warning(f"Workshop '{workshop_name}' not found in database.")
