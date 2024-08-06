@@ -49,6 +49,7 @@ def connect_to_mongodb(uri):
 
     students_collection = db['students']
     attendance_collection = db['attendance']
+    workshops_collection = db['workshops']
 
     students = students_collection.find({}, {'studentID': 1, 'firstName': 1, 'lastName': 1, 'email': 1})
     attendance_count = defaultdict(lambda: {'count': 0, 'email': ''})
@@ -56,9 +57,16 @@ def connect_to_mongodb(uri):
     for student in students:
         student_id = student['studentID']
         student_name = f"{student['firstName']} {student['lastName']}"
-
         count = attendance_collection.count_documents({'username': student_id})
-        attendance_count[student_name] = {'count': count, 'email': student['email']}
+        attended_workshops_ids = attendance_collection.distinct('workshopId', {'username': student_id})
+        workshops = workshops_collection.find({'workshopId': {'$in': attended_workshops_ids}}, {'workshopName': 1})
+        workshops_names = [workshop['workshopName'] for workshop in workshops]
+
+        attendance_count[student_name] = {
+            'count': count,
+            'email': student['email'],
+            'workshopsAttended': workshops_names
+        }
 
     attendance_count = dict(attendance_count)
     return attendance_count
@@ -87,15 +95,22 @@ def job():
     password = "ypxt tsbh okvx qali"
 
     attendance_count = connect_to_mongodb(URI)
-    # attendance_count = {'Bivek Kasaju': {'count': 3, 'email': 'trollboi7777@gmail.com'}, 'Test Kasaju': {'count': 0, 'email': '18bivek@gmail.com'}}
 
     for student_name, info in attendance_count.items():
         subject = "Workshop Count"
         count = info['count']
-        body = f"Hello {student_name},\n\nYour current workshop count is {count}.\n\nBest regards,\nAutoAttend Team"
+        workshops_attended = ', '.join(info['workshopsAttended']) if info['workshopsAttended'] else 'None'
+        body = (
+            f"Hello {student_name},\n\n"
+            f"Your current workshop count is {count}.\n"
+            f"Workshops attended: {workshops_attended}\n\n"
+            f"Best regards,\n"
+            f"AutoAttend Team"
+        )
         to_email = info['email']
 
         send_email(subject, body, to_email, from_email, password)
+
 
 
 def schedule_task(user_selected_day, task_hour, task_minute):
