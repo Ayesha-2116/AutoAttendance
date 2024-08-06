@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import applyCss
 from pymongo import MongoClient
+from datetime import timedelta
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -14,46 +15,12 @@ def connect_to_mongodb(uri):
     """
     client = MongoClient(uri)
     db = client[DB_NAME]
-    return db, db['attendance'], db['workshops'], db['students']
+    return db, db['attendance'], db['workshops'], db['students'], db['ratings'], db['presenters']
 
 #st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
-def apply_custom_css():
-    custom_css = """
-    <style>
-   
-    #autoattend-tracker {
-        margin-left: auto;
-        color:DodgerBlue;
-        padding: inherit;
-      
-    }
-    .header-section {
-        background-color: #f0f2f6;
-        /*padding: 20px;*/
-        border-radius: 10px;
-        color: DodgerBlue;
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 2.5em;
-        font-weight: bold;
-        position: fixed;
-        top: 7%;
-        left: 0;
-        width: 100%;
-        z-index: 1000;
-        margin-left: auto;
-        margin-right: auto;
-        
-    }
-    
-    
-    </style>
-    """
-    st.markdown(custom_css, unsafe_allow_html=True)
-
 def fetch_workshop_data():
-    db, attendance_collection, workshops_collection, _ = connect_to_mongodb(URI)
+    db, attendance_collection, workshops_collection, _, _, _ = connect_to_mongodb(URI)
 
     # Fetch attendance data
     attendance = list(attendance_collection.find())
@@ -78,6 +45,40 @@ def fetch_workshop_data():
 
     return pd.DataFrame(workshop_data)
 
+def fetch_late_arrival_data():
+    db, attendance_collection, workshops_collection, _, _, _ = connect_to_mongodb(URI)
+
+    # Fetch attendance data
+    attendance = list(attendance_collection.find())
+
+    # Get the list of workshop IDs present in the attendance data
+    attended_workshop_ids = set(a['workshopId'] for a in attendance)
+
+    # Fetch only the workshops that have entries in the attendance data
+    workshops = list(workshops_collection.find({"workshopId": {"$in": list(attended_workshop_ids)}}))
+
+    # Prepare data for late arrivals
+    late_arrival_data = []
+    for workshop in workshops:
+        workshop_id = workshop['workshopId']
+        workshop_datetime = workshop['date']
+
+        late_count = 0
+        for record in attendance:
+            if record['workshopId'] == workshop_id:
+                arrival_datetime = record['inTime']
+
+                # Check if the student arrived more than 5 minutes late
+                if arrival_datetime > (workshop_datetime + timedelta(minutes=5)):
+                    late_count += 1
+
+        late_arrival_data.append({
+            "Workshop Title": workshop['workshopName'],
+            "Late Arrival": late_count
+        })
+
+    return pd.DataFrame(late_arrival_data)
+
 # Function to Display the Dashboard Charts :
 def displayDashboard():
     
@@ -91,18 +92,7 @@ def displayDashboard():
     df_workshops = fetch_workshop_data()
 
     #CHART No.2 : ---------------------------------
-    late_arrival_data = {
-        "Workshop Title": [
-        "Intro to AI", "Basics of Big Data", "Information Retrieval Systems",
-        "Advanced Python", "Data Visualization", "Machine Learning Basics",
-        "Deep Learning", "Natural Language Processing", "Computer Vision",
-        "Ethics in AI"
-        ],
-        "Late Arrival": [12, 4, 16, 1, 1, 3, 7, 2, 5, 13]
-    }
-
-
-    df_late_arrivals = pd.DataFrame(late_arrival_data)
+    df_late_arrivals = fetch_late_arrival_data()
 
     #CHART No.3 : ---------------------------------
     #previous week
@@ -131,8 +121,8 @@ def displayDashboard():
     with col1:
         # st.subheader("Number of Students Present and Absent in Each Workshop (Current Week)")
         fig_workshops = px.bar(df_workshops, x='Workshop Title', y=['Present', 'Absent'], barmode='group',
-                            labels={'value': 'Number of Students', 'variable': 'Attendance'},
-                            title="Student's Attendance in Workshops")
+                                labels={'value': 'Number of Students', 'variable': 'Attendance'},
+                                title="Student's Attendance in Workshops")
         fig_workshops.update_layout(xaxis_tickangle=90) # Change to 90 degrees to make titles vertical
         st.plotly_chart(fig_workshops)
 
@@ -140,9 +130,10 @@ def displayDashboard():
     with col2:
         # st.subheader("Number of Students that Arrived Late in the Past Three Weeks")
         fig_late_arrivals = px.bar(df_late_arrivals, x='Workshop Title', y='Late Arrival',
-                                labels={'Late Arrival': 'Number of Students', 'Workshop Title': 'Workshop Title'},
-                                title='Late Arrivals')
+                                   labels={'Late Arrival': 'Number of Students', 'Workshop Title': 'Workshop Title'},
+                                   title='Late Arrivals')
         fig_late_arrivals.update_traces(marker_color='orange')
+        fig_late_arrivals.update_layout(xaxis_tickangle=90) # Change to 90 degrees to make titles vertical
         st.plotly_chart(fig_late_arrivals)
 
     # Chart 3: Top presenters of last week
