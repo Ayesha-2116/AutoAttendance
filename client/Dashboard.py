@@ -2,6 +2,19 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import applyCss
+from pymongo import MongoClient
+
+# MongoDB connection details
+URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+DB_NAME = 'attendance_system'
+
+def connect_to_mongodb(uri):
+    """
+    Establishes a connection to MongoDB and returns the database and required collections.
+    """
+    client = MongoClient(uri)
+    db = client[DB_NAME]
+    return db, db['attendance'], db['workshops'], db['students']
 
 #st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
@@ -39,31 +52,43 @@ def apply_custom_css():
     """
     st.markdown(custom_css, unsafe_allow_html=True)
 
+def fetch_workshop_data():
+    db, attendance_collection, workshops_collection, _ = connect_to_mongodb(URI)
+
+    # Fetch attendance data
+    attendance = list(attendance_collection.find())
+
+    # Get the list of workshop IDs present in the attendance data
+    attended_workshop_ids = set(a['workshopId'] for a in attendance)
+
+    # Fetch only the workshops that have entries in the attendance data
+    workshops = list(workshops_collection.find({"workshopId": {"$in": list(attended_workshop_ids)}}))
+
+    workshop_data = []
+    for workshop in workshops:
+        workshop_id = workshop['workshopId']
+        present_count = sum(1 for a in attendance if a['workshopId'] == workshop_id and a['present'] == True)
+        absent_count = sum(1 for a in attendance if a['workshopId'] == workshop_id and a['present'] == False)
+
+        workshop_data.append({
+            "Workshop Title": workshop['workshopName'],
+            "Present": present_count,
+            "Absent": absent_count
+        })
+
+    return pd.DataFrame(workshop_data)
+
+# Function to Display the Dashboard Charts :
 def displayDashboard():
     
     applyCss.apply_custom_css()
     # Top section with background color
-    st.markdown('<div class="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
+    st.markdown('<div cl="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
     st.markdown('### Dashboard')
-    #st.title('AutoAttend Tracker')
 
     #CHART No.1 : ---------------------------------
-    workshop_data = {
-        "Workshop Title": [
-            "Intro to AI", "Basics of Big Data", "Information Retrieval Systems",
-            "Advanced Python", "Data Visualization", "Machine Learning Basics",
-            "Deep Learning", "Natural Language Processing", "Computer Vision",
-            "Ethics in AI"
-        ],
-        "Present": [36, 38, 38, 35, 37, 39, 40, 38, 36, 37],
-        "Absent": [4, 2, 2, 5, 3, 1, 0, 2, 4, 3]
-    }
-
-
-    df_workshops = pd.DataFrame(workshop_data)
-
-    #Removed the Monthly data showcasing the attendance count per workshop.
-    #Will add it in the end if needed.
+    # Fetch workshop data from MongoDB
+    df_workshops = fetch_workshop_data()
 
     #CHART No.2 : ---------------------------------
     late_arrival_data = {
@@ -99,7 +124,7 @@ def displayDashboard():
 
     df_workshop_ratings = pd.DataFrame(workshop_rating_data)
 
-
+ # Create and display the chart in columns
     col1, col2 = st.columns(2)
 
     # Chart 1: Student attendance in workshops
@@ -108,6 +133,7 @@ def displayDashboard():
         fig_workshops = px.bar(df_workshops, x='Workshop Title', y=['Present', 'Absent'], barmode='group',
                             labels={'value': 'Number of Students', 'variable': 'Attendance'},
                             title="Student's Attendance in Workshops")
+        fig_workshops.update_layout(xaxis_tickangle=90) # Change to 90 degrees to make titles vertical
         st.plotly_chart(fig_workshops)
 
     # Chart 2: Late arrivals in the past three weeks
