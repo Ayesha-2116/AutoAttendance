@@ -7,6 +7,7 @@ import streamlit as st
 from datetime import datetime, timedelta, timezone
 from SurveyEmailSender import send_survey_email
 import applyCss
+import pytz
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -26,17 +27,33 @@ def get_todays_workshops(workshop_collection):
     """
     Fetches workshops scheduled for today from the database.
     """
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Set the timezone for Windsor, Canada
+    eastern = pytz.timezone('America/Toronto')  # Windsor follows the Toronto timezone (Eastern Time)
+
+    # Get the current date and time in Eastern Time
+    now = datetime.now(eastern)
+
+    # Calculate the start and end of today in Eastern Time
+    today_start = eastern.localize(datetime(now.year, now.month, now.day, 0, 0, 0))
     today_end = today_start + timedelta(days=1)
 
+    # Convert the start and end times to UTC for the query
+    today_start_utc = today_start.astimezone(pytz.utc)
+    today_end_utc = today_end.astimezone(pytz.utc)
+
+    # Query the database for today's workshops in UTC
     workshops = workshop_collection.find({
         'date': {
-            '$gte': today_start,
-            '$lt': today_end
+            '$gte': today_start_utc,
+            '$lt': today_end_utc
         }
     })
-    return {w['workshopName']: w['workshopId'] for w in workshops}
 
+    # Print workshop dates for debugging
+    workshop_dict = {}
+    for workshop in workshops:
+        workshop_dict[workshop['workshopName']] = workshop['workshopId']
+    return workshop_dict
 
 @st.cache_data(ttl=60)  # Cache for 1 minute
 def load_registered_students(workshop_id, db_name, uri):
@@ -142,7 +159,6 @@ def main():
 
     # Get today's workshops
     workshop_list = get_todays_workshops(workshop_collection)
-
     if not workshop_list:
         st.warning("No workshops scheduled for today.")
         return
@@ -152,7 +168,7 @@ def main():
 
     # Fetch the presenter ID for the selected workshop
     workshop = workshop_collection.find_one({"workshopId": workshop_id})
-    presenter_id = workshop.get("presenter_id", {}).get("$oid", "")
+    presenter_id = str(workshop.get("presenter_id", ""))
 
     # Load registered students
     known_face_encodings, student_ids, student_names = load_registered_students(
@@ -163,18 +179,17 @@ def main():
         st.warning("No registered students found for the selected workshop.")
         return
 
-        
 
-placeholder_camera = st.empty()
-# Capture photo
-img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
+    placeholder_camera = st.empty()
+    # Capture photo
+    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='1')
 
-if img_file_buffer:
-    image = cv2.imdecode(np.frombuffer(img_file_buffer.read(), dtype=np.uint8), cv2.IMREAD_COLOR)
-    result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id,
-                                attendance_collection, student_collection, presenter_id)
-    st.success(result)
-    img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
+    if img_file_buffer:
+        image = cv2.imdecode(np.frombuffer(img_file_buffer.read(), dtype=np.uint8), cv2.IMREAD_COLOR)
+        result = process_attendance(image, known_face_encodings, student_ids, student_names, workshop_id,
+                                    attendance_collection, student_collection, presenter_id)
+        st.success(result)
+        img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
 
 if __name__ == "__main__":
     main()
