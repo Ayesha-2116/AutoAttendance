@@ -19,8 +19,8 @@ def connect_to_mongodb(uri):
 
 #st.set_page_config(layout='wide', initial_sidebar_state='collapsed')
 
-def fetch_workshop_data():
-    db, attendance_collection, workshops_collection, _, _, _ = connect_to_mongodb(URI)
+def fetch_workshop_data(db, attendance_collection, workshops_collection):
+    # db, attendance_collection, workshops_collection, _, _, _ = connect_to_mongodb(URI)
 
     # Fetch attendance data
     attendance = list(attendance_collection.find())
@@ -45,8 +45,8 @@ def fetch_workshop_data():
 
     return pd.DataFrame(workshop_data)
 
-def fetch_late_arrival_data():
-    db, attendance_collection, workshops_collection, _, _, _ = connect_to_mongodb(URI)
+def fetch_late_arrival_data(db, attendance_collection, workshops_collection):
+    # db, attendance_collection, workshops_collection, _, _, _ = connect_to_mongodb(URI)
 
     # Fetch attendance data
     attendance = list(attendance_collection.find())
@@ -79,6 +79,65 @@ def fetch_late_arrival_data():
 
     return pd.DataFrame(late_arrival_data)
 
+
+def fetch_presenter_data(db, ratings_collection, presenters_collection):
+    ratings = list(ratings_collection.find())
+
+    # Calculate the average rating for each presenter
+    presenter_ratings = {}
+    for rating in ratings:
+        presenter_id = rating['presenterID']
+        if presenter_id in presenter_ratings:
+            presenter_ratings[presenter_id].append(rating['presenter_rating'])
+        else:
+            presenter_ratings[presenter_id] = [rating['presenter_rating']]
+
+    average_ratings = {presenter_id: sum(ratings) / len(ratings) for presenter_id, ratings in presenter_ratings.items()}
+
+    # Join with presenters collection to get the full names
+    presenter_data = []
+    for presenter_id, avg_rating in average_ratings.items():
+        presenter = presenters_collection.find_one({"presenterID": presenter_id})
+        full_name = f"{presenter['firstName']} {presenter['lastName']}"
+        presenter_data.append({
+            "Presenter": full_name,
+            "Rating": avg_rating
+        })
+
+    return pd.DataFrame(presenter_data)
+
+
+def fetch_workshop_rating_data(db, ratings_collection, workshops_collection):
+    ratings = list(ratings_collection.find())
+
+    workshop_ratings = {}
+    for rating in ratings:
+        workshop_id = rating['workshopId']
+        if workshop_id in workshop_ratings:
+            workshop_ratings[workshop_id].append(rating['workshop_rating'])
+        else:
+            workshop_ratings[workshop_id] = [rating['workshop_rating']]
+
+    average_ratings = {workshop_id: sum(ratings) / len(ratings) for workshop_id, ratings in workshop_ratings.items()}
+
+    workshop_data = []
+    for workshop_id, avg_rating in average_ratings.items():
+        workshop = workshops_collection.find_one({"workshopId": workshop_id})
+
+        if workshop:
+            workshop_name = workshop['workshopName']
+            workshop_data.append({
+                "Workshop": workshop_name,
+                "Rating": avg_rating
+            })
+        else:
+            print(f"Workshop with ID {workshop_id} not found in workshops collection.")
+
+    return pd.DataFrame(workshop_data)
+
+
+
+
 # Function to Display the Dashboard Charts :
 def displayDashboard():
     
@@ -87,32 +146,20 @@ def displayDashboard():
     st.markdown('<div cl="header-section">AutoAttend Tracker</div>', unsafe_allow_html=True)
     st.markdown('### Dashboard')
 
+    db, attendance_collection, workshops_collection, students_collection, ratings_collection, presenters_collection = connect_to_mongodb(
+        URI)
     #CHART No.1 : ---------------------------------
     # Fetch workshop data from MongoDB
-    df_workshops = fetch_workshop_data()
+    df_workshops = fetch_workshop_data(db, attendance_collection, workshops_collection)
 
     #CHART No.2 : ---------------------------------
-    df_late_arrivals = fetch_late_arrival_data()
+    df_late_arrivals = fetch_late_arrival_data(db, attendance_collection, workshops_collection)
 
-    #CHART No.3 : ---------------------------------
-    #previous week
-    presenter_data = {
-        "Presenter": ["Aznam Yacoub", "Soroush Zadeh", "Hossein Fani", "Zara"],
-        "Rating": [3, 2.5, 5, 3.5]
-    }
+    # CHART No.3 : ---------------------------------
+    df_presenters = fetch_presenter_data(db, ratings_collection, presenters_collection)
 
-
-    df_presenters = pd.DataFrame(presenter_data)
-
-    #CHART No.4 : ---------------------------------
-    #previous week
-    workshop_rating_data = {
-        "Workshop": ["Intro to AI", "Basics of Big Data", "Information Retrieval Systems", "Deep Learning"],
-        "Rating": [4, 3.5, 2, 4.5]
-    }
-
-
-    df_workshop_ratings = pd.DataFrame(workshop_rating_data)
+    # CHART No.4 : ---------------------------------
+    df_workshop_ratings = fetch_workshop_rating_data(db, ratings_collection, workshops_collection)
 
  # Create and display the chart in columns
     col1, col2 = st.columns(2)
@@ -138,7 +185,6 @@ def displayDashboard():
 
     # Chart 3: Top presenters of last week
     with col1:
-        # st.subheader("Top Presenters of Last Week")
         fig_presenters = px.pie(
             df_presenters,
             names='Presenter',
@@ -157,7 +203,6 @@ def displayDashboard():
             labels={'Rating': 'Rating', 'Workshop': 'Workshop'},
             title='Top Workshops of Last Week',
             color_discrete_sequence=px.colors.qualitative.Light24
-
         )
         st.plotly_chart(fig_workshop_ratings)
 
