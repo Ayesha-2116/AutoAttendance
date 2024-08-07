@@ -98,11 +98,12 @@ def fetch_presenter_data(db, ratings_collection, presenters_collection):
     presenter_data = []
     for presenter_id, avg_rating in average_ratings.items():
         presenter = presenters_collection.find_one({"presenterID": presenter_id})
-        full_name = f"{presenter['firstName']} {presenter['lastName']}"
-        presenter_data.append({
-            "Presenter": full_name,
-            "Rating": avg_rating
-        })
+        if presenter:
+            full_name = f"{presenter['firstName']} {presenter['lastName']}"
+            presenter_data.append({
+                "Presenter": full_name,
+                "Rating": avg_rating
+            })
 
     return pd.DataFrame(presenter_data)
 
