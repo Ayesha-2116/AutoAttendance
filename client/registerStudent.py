@@ -5,13 +5,7 @@ import numpy as np
 import base64
 from pymongo import MongoClient
 from io import BytesIO
-
-
-
-# Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
-db = client['Attendence']
-collection = db['students']
+import gridfs  # Import GridFS for handling image storage
 
 # MongoDB connection details
 URI = "mongodb+srv://AutoAttendNew:AutoAttendNew@cluster0.vlu3rze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -23,7 +17,7 @@ def connect_to_mongodb(uri):
     """
     client = MongoClient(uri)
     db = client[DB_NAME]
-    return db, db['students']
+    return db, db['students'], gridfs.GridFS(db)  # Return the GridFS instance
 
 def runRegisterStudent():
     # Apply custom CSS style
@@ -135,12 +129,14 @@ def runRegisterStudent():
     placeholder_student_lname = st.empty()
     placeholder_student_id = st.empty()
     placeholder_student_email = st.empty()
+    placeholder_student_username = st.empty()
     placeholder_camera = st.empty()
 
     # Input fields for student name and ID
     student_fname = placeholder_student_name.text_input('Enter First Name:', key='student_name_input')
     student_lname = placeholder_student_lname.text_input('Enter Last Name:', key='student_lname_input')
     student_id = placeholder_student_id.text_input('Enter Student ID:', key='student_id_input')
+    student_username = placeholder_student_username.text_input('Enter Student Username:', key='student_username')
     student_email = placeholder_student_email.text_input('Enter Student Email:', key='placeholder_student_email')
 
     # Camera input
@@ -153,33 +149,31 @@ def runRegisterStudent():
 
     # Save button to save data to MongoDB
     if st.button('Save Data'):
-        if student_fname.strip() != '' and student_lname.strip()!='' and student_id.strip() != '' and student_email.strip() != '' and img_file_buffer is not None:
-            save_to_mongodb(student_fname,student_lname, student_id, student_email,cv2_img, placeholder_student_name,placeholder_student_lname, placeholder_student_id,placeholder_student_email, placeholder_camera)
+        if student_fname.strip() != '' and student_lname.strip()!='' and student_id.strip() != '' and student_email.strip() != '' and student_username.strip() != '' and img_file_buffer is not None:
+            save_to_mongodb(student_fname,student_lname, student_id, student_email,student_username,cv2_img, placeholder_student_name,placeholder_student_lname, placeholder_student_id,placeholder_student_email,placeholder_student_username, placeholder_camera)
         else:
-            st.warning('Please enter student name, student ID, and capture a photo before saving.')
+            st.warning('Please enter all fields, and capture a photo before saving.')
 
-def save_to_mongodb(student_fname,student_lname, student_id,student_email, image, placeholder_student_name,placeholder_student_lname, placeholder_student_id, placeholder_student_email,placeholder_camera):
-    # Check if student ID already exists
-    db, students_collection = connect_to_mongodb(URI)
+def save_to_mongodb(student_fname,student_lname, student_id, student_email,student_username,image, placeholder_student_name,placeholder_student_lname, placeholder_student_id,placeholder_student_email,placeholder_student_username, placeholder_camera):
+    db, students_collection, fs = connect_to_mongodb(URI)
     existing_student = students_collection.find_one({'studentID': student_id})
-    
+
     if existing_student:
         st.warning(f"Student with ID '{student_id}' already exists. Please use a different student ID.")
         return
-    # Convert image to bytes for storage
-    _, buffer = cv2.imencode('.jpg', image)
-    image_bytes = BytesIO(buffer).getvalue()
-    
-    # Convert bytes to base64
-    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
-    # Prepare document to insert into MongoDB
+    # Convert the image to bytes and store it using GridFS
+    _, buffer = cv2.imencode('.jpg', image)
+    image_id = fs.put(buffer.tobytes(), filename=f"{student_username}_profile.jpg")
+
+    # Prepare and insert the document into the students collection
     document = {
         'firstName': student_fname,
-        'lastName':student_lname,
+        'lastName': student_lname,
         'studentID': student_id,
+        'username': student_username,
         'email': student_email,
-        'profile_image_id': image_base64
+        'profile_image_id': image_id
     }
 
     # Insert document into MongoDB collection
@@ -189,5 +183,6 @@ def save_to_mongodb(student_fname,student_lname, student_id,student_email, image
     placeholder_student_name.text_input('Enter Student Name:', key='student_name_input2')
     placeholder_student_lname.text_input('Enter Last Name:', key='student_lname_input2')
     placeholder_student_id.text_input('Enter Student ID:', key='student_id_input2')
+    placeholder_student_username.text_input('Enter Student Username:', key='student_username2')
     placeholder_student_email.text_input('Enter Student Email:', key='placeholder_student_email2')
     placeholder_camera.camera_input("Capture Photo", key='camera_input2')

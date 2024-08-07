@@ -1,6 +1,7 @@
 import face_recognition
 import numpy as np
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 from gridfs import GridFS
 import cv2
 import streamlit as st
@@ -20,7 +21,7 @@ def connect_to_mongodb(uri):
     """
     client = MongoClient(uri)
     db = client[DB_NAME]
-    return db, db['students'], db['workshops'], db['attendance'], GridFS(db)
+    return db, db['students'], db['workshops'], db['attendance'], db['presenters'], GridFS(db)
 
 
 def get_todays_workshops(workshop_collection):
@@ -54,6 +55,7 @@ def get_todays_workshops(workshop_collection):
     for workshop in workshops:
         workshop_dict[workshop['workshopName']] = workshop['workshopId']
     return workshop_dict
+
 
 @st.cache_data(ttl=60)  # Cache for 1 minute
 def load_registered_students(workshop_id, db_name, uri):
@@ -155,7 +157,8 @@ def main():
     # st.title("Workshop Attendance System")
 
     # Connect to MongoDB
-    db, student_collection, workshop_collection, attendance_collection, fs = connect_to_mongodb(URI)
+    db, student_collection, workshop_collection, attendance_collection, presenters_collection, fs = connect_to_mongodb(
+        URI)
 
     # Get today's workshops
     workshop_list = get_todays_workshops(workshop_collection)
@@ -168,7 +171,14 @@ def main():
 
     # Fetch the presenter ID for the selected workshop
     workshop = workshop_collection.find_one({"workshopId": workshop_id})
-    presenter_id = str(workshop.get("presenter_id", ""))
+    presenter_object_id = workshop.get("presenter_id")
+
+    if presenter_object_id:
+        presenter = presenters_collection.find_one({"_id": presenter_object_id})
+        presenter_id = presenter.get("presenterID")
+    else:
+        st.warning("Presenter details not found.")
+        return
 
     # Load registered students
     known_face_encodings, student_ids, student_names = load_registered_students(
@@ -178,7 +188,6 @@ def main():
     if not student_ids:
         st.warning("No registered students found for the selected workshop.")
         return
-
 
     placeholder_camera = st.empty()
     # Capture photo
@@ -190,6 +199,7 @@ def main():
                                     attendance_collection, student_collection, presenter_id)
         st.success(result)
         img_file_buffer = placeholder_camera.camera_input("Capture Photo", key='2')
+
 
 if __name__ == "__main__":
     main()
