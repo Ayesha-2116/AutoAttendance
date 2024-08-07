@@ -190,29 +190,26 @@ def main():
                 missing_student_ids = [sid for sid in student_ids if sid not in existing_student_ids]
                 if missing_student_ids:
                     st.error(f"Student IDs not found in database: {', '.join(map(str, missing_student_ids))}")
-                    return
- 
-                # Insert attendance records
-                for index, row in df.iterrows():
-                    student_id = str(row['Student_ID'])
-                    student_name = row['Student Name']
-                    workshop_name = row['Workshop Name']
- 
-                    # Fetch workshop ID based on workshop_name
-                    workshop = db.workshops.find_one({'workshopName': workshop_name})
-                    if workshop:
-                        workshop_id = workshop['workshopId']
-                        in_time = workshop['date'] + timedelta(hours=7)  # Adjust as per timezone
-                        present = False  # Assuming default is not present
- 
-                        # Fetch username from students table based on student_id
-                        student = db.students.find_one({'studentID': student_id})
-                        if student:
-                            insert_attendance(student_id, workshop_id, in_time, present)
-                            st.success(f"Attendance recorded for {student_name} at {workshop_name}.")
-                    else:
-                        st.warning(f"Workshop '{workshop_name}' not found in database.")
- 
+                else:                    # Insert attendance records
+                    for index, row in df.iterrows():
+                        student_id = str(row['Student_ID'])
+                        student_name = row['Student Name']
+                        workshop_name = row['Workshop Name']
+    
+                        # Fetch workshop ID based on workshop_name
+                        workshop = db.workshops.find_one({'workshopName': workshop_name})
+                        if workshop:
+                            workshop_id = workshop['workshopId']
+                            in_time = workshop['date'] + timedelta(hours=7)  # Adjust as per timezone
+                            present = False  # Assuming default is not present
+    
+                            # Fetch username from students table based on student_id
+                            student = db.students.find_one({'studentID': student_id})
+                            if student:
+                                insert_attendance(student_id, workshop_id, in_time, present)
+                                st.success(f"Attendance recorded for {student_name} at {workshop_name}.")
+                        else:
+                            st.warning(f"Workshop '{workshop_name}' not found in database.")
             except Exception as e:
                 st.error(f"Error processing file: {e}")
  
