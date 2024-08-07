@@ -119,7 +119,7 @@ def student_search():
             student_name = f"{student['firstName']} {student['lastName']}"
 
             # Query attendance collection
-            attendance_records = list(attendance_collection.find({"username": search_term}))
+            attendance_records = list(attendance_collection.find({"username": search_term, "present": True}))
 
             if not attendance_records:
                 st.write(f"No attendance records found for student ID '{search_term}'.")
