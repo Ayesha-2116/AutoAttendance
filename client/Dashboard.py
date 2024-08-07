@@ -107,6 +107,7 @@ def fetch_presenter_data(db, ratings_collection, presenters_collection):
     return pd.DataFrame(presenter_data)
 
 
+
 def fetch_workshop_rating_data(db, ratings_collection, workshops_collection):
     ratings = list(ratings_collection.find())
 
